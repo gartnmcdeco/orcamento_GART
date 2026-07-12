@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GART · Orçamento 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase (armazenamento compartilhado). Só é usado se FIREBASE_CONFIG for preenchido no script abaixo. -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    /* Identidade NMC: apenas estas três cores + neutros de apoio, conforme diretriz de marca */
+    --brand-orange:#FF671F;    /* NMC Laranja */
+    --brand-orange-dark:#e0551a;
+    --brand-petrol:#005A69;    /* NMC Structa Petrol */
+    --brand-petrol-dark:#00434e;
+    --ink:#231F20;             /* Preto — campos de texto padrão */
+    --paper:#f7f7f6;
+    --panel:#ffffff;
+    --line:#e3e1df;
+    --slate:#6b6668;
+    --ok:#2f7d5c;
+    --err:#c1432a;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Raleway', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-weight:400; font-size:14px; line-height:1.45;
+  }
+  .brandfont{ font-family:'Raleway', sans-serif; font-weight:700; letter-spacing:0.02em; }
+  a{color:var(--brand-petrol);}
+  button{
+    font-family:inherit; cursor:pointer; border:none; border-radius:var(--radius);
+
+    padding:9px 16px; font-size:13.5px; font-weight:600; transition:filter .12s ease, transform .06s ease;
+  }
+  button:active{ transform: translateY(1px); }
+  .btn-primary{ background:var(--brand-orange); color:#fff; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background:transparent; color:var(--slate); border:1px solid var(--line); }
+  .btn-ghost:hover{ background:#fff; }
+  .btn-danger{ background:transparent; color:var(--err); border:1px solid #e6c9c4; }
+  .btn-danger:hover{ background:#fbeeec; }
+  .btn-sm{ padding:5px 10px; font-size:12px; }
+  input, select, textarea{
+    font-family:inherit; font-size:13.5px; padding:8px 10px; border:1px solid var(--line);
+    border-radius:var(--radius); background:#fff; color:var(--ink); width:100%;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--brand-orange); outline-offset:1px; }
+  label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); font-weight:700; display:block; margin-bottom:4px; }
+  .field{ margin-bottom:12px; }
+  .row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .row > .field{ flex:1; min-width:140px; }
+  .static-value{
+    font-size:13.5px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius);
+    background:#f2f6f6; color:var(--ink); font-weight:600;
+  }
+  .gart-panel .panel, .gart-panel{ background:#fbfdfd; }
+
+  /* ---- Login ---- */
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;
+    background: linear-gradient(160deg, var(--brand-petrol-dark) 0%, var(--ink) 65%);
+  }
+  .login-card{
+    background:var(--panel); border-radius:10px; padding:40px 36px; width:340px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+  }
+  .login-logo{ font-size:26px; font-weight:700; letter-spacing:.08em; color:var(--ink); margin-bottom:2px; }
+  .login-sub{ color:var(--slate); font-size:12.5px; margin-bottom:24px; }
+  .login-error{ color:var(--err); font-size:12.5px; margin-top:8px; min-height:16px; }
+
+  /* ---- Shell ---- */
+  #app-shell{ display:none; min-height:100vh; }
+  header.topbar{
+    background:var(--brand-petrol); color:#fff; padding:14px 22px; display:flex; align-items:center;
+    justify-content:space-between; position:sticky; top:0; z-index:50;
+  }
+  header.topbar .logo{ font-weight:700; letter-spacing:.08em; font-size:16px; }
+  header.topbar .logo span{ color:var(--brand-orange); }
+  nav.tabs{ display:flex; gap:6px; }
+  nav.tabs button{
+    background:transparent; color:#d9ecef; font-weight:600; padding:8px 14px; border-radius:5px;
+  }
+  nav.tabs button.active{ background:var(--brand-orange); color:#fff; }
+  main{ max-width:1180px; margin:0 auto; padding:26px 20px 80px; }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:22px;
+    margin-bottom:20px;
+  }
+  .panel h2{ margin:0 0 16px; font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--brand-petrol); border-bottom:2px solid var(--brand-orange); padding-bottom:8px; font-weight:600; }
+  .panel h3{ margin:0 0 10px; font-size:13px; color:var(--slate); }
+
+  table{ width:100%; border-collapse:collapse; font-size:12.8px; }
+  th, td{ padding:7px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+  th{ background:#eef4f5; color:var(--ink); font-size:11px; text-transform:uppercase; letter-spacing:.03em; }
+  tbody tr:hover{ background:#fbf9f4; }
+  td input, td select{ padding:5px 7px; font-size:12.5px; }
+  .num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .muted{ color:var(--slate); }
+  .small{ font-size:11.5px; }
+  .pill{ display:inline-block; padding:2px 8px; border-radius:99px; font-size:10.5px; font-weight:700; }
+  .pill-ok{ background:#e2f0e8; color:var(--ok); }
+  .pill-warn{ background:#ffe9dd; color:var(--brand-orange-dark); }
+
+  .totals{ display:flex; justify-content:flex-end; margin-top:14px; }
+  .totals table{ width:auto; min-width:280px; }
+  .totals td{ font-size:13.5px; }
+  .totals tr:last-child td{ font-weight:800; font-size:16px; border-top:2px solid var(--ink); border-bottom:none; }
+
+  .totals-bar{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:stretch;
+    margin-top:12px; padding-top:10px; border-top:2px solid var(--ink);
+  }
+  .totals-bar > div{
+    background:#f5f4f2; border-radius:6px; padding:6px 14px; display:flex; flex-direction:column; gap:2px; min-width:120px;
+  }
+  .totals-bar .t-label{ font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); font-weight:700; }
+  .totals-bar .t-value{ font-size:15px; font-weight:700; color:var(--ink); }
+  .totals-bar .t-grand{ background:var(--brand-petrol); }
+  .totals-bar .t-grand .t-label{ color:#cfeaef; }
+  .totals-bar .t-grand .t-value{ color:#fff; font-size:17px; }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
+  .search{ max-width:260px; }
+
+  .toast{
+    position:fixed; bottom:22px; right:22px; background:var(--ink); color:#fff; padding:12px 18px;
+    border-radius:8px; font-size:13px; box-shadow:0 12px 30px rgba(0,0,0,.25); z-index:200;
+    opacity:0; transform:translateY(8px); transition:.25s ease; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  .admin-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+  .admin-tabs button{ background:#eef4f5; color:var(--ink); }
+  .admin-tabs button.active{ background:var(--brand-petrol); color:#fff; }
+
+  .subgrid{ overflow-x:auto; }
+  .item-remove{ color:var(--err); background:none; border:none; font-size:16px; padding:2px 6px; }
+
+  footer.printfoot{ display:none; }
+
+  .print-heading{ display:none; }
+
+  .print-only{ display:none; }
+
+  .info-panel .obs-text{ font-size:12px; color:var(--ink); margin:0; background:#fff6f0; border-left:3px solid var(--brand-orange); padding:8px 12px; border-radius:4px; }
+  .info-panel .obs-final{ font-size:12px; font-style:italic; color:var(--slate); margin:10px 0 0; }
+  .desc-table{ width:100%; border-collapse:collapse; }
+  .desc-table td{ border:1px solid var(--line); padding:7px 10px; font-size:12px; vertical-align:top; }
+  .desc-table .desc-nome{ font-weight:700; color:var(--brand-petrol); width:170px; background:#f5f9fa; }
+  .desc-table input{ font-size:12px; padding:5px 8px; }
+  .signoff{ display:flex; gap:24px; margin-top:28px; flex-wrap:wrap; }
+  .signoff .box{ flex:1; min-width:220px; border-top:1px solid var(--ink); padding-top:8px; }
+  .signoff .box b{ display:block; font-size:12px; }
+  .signoff .box .small{ margin-top:4px; }
+
+  ::placeholder{ color:#b7b0a0; }
+  .hint{ font-size:11px; color:var(--slate); margin-top:4px; }
+
+  /* ---- Autocomplete de produto (caixa única fixa, escapa do scroll da tabela) ---- */
+  .prod-input{ font-weight:600; }
+  .suggest-box{
+    position:fixed; z-index:500; background:#fff; border:1px solid var(--line);
+    border-radius:8px; box-shadow:0 14px 30px -10px rgba(0,0,0,.3); max-height:300px;
+    overflow-y:auto; min-width:340px; display:none;
+  }
+  .suggest-item{
+    display:grid; grid-template-columns:62px 1fr auto; gap:8px; align-items:center; padding:5px 10px;
+    cursor:pointer; border-bottom:1px solid #f1efe8; font-size:11px;
+  }
+  .suggest-item:last-child{ border-bottom:none; }
+  .suggest-item:hover{ background:#f6f1e6; }
+  .suggest-modelo{ font-weight:800; color:var(--brand-petrol-dark); font-size:11px; }
+  .suggest-desc{ color:var(--ink); font-size:11px; }
+  .suggest-unid{ color:var(--slate); font-size:9.5px; white-space:nowrap; }
+  .suggest-empty{ padding:10px; color:var(--slate); font-size:11px; }
+
+  /* ---- Campo de quantidade: digitação livre, sem setinhas, fonte maior para grandes volumes ---- */
+  .qty-input{
+    font-size:16px; font-weight:700; text-align:right; padding:8px 10px;
+  }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  input[type=number]{ -moz-appearance:textfield; }
+
+  /* ======================================================================
+     IMPRESSÃO — bloco colocado por último de propósito, para vencer a
+     cascata de qualquer regra de tela declarada antes (mesma especificidade,
+     ordem de origem decide). Não adicione regras de tela depois deste bloco.
+     ====================================================================== */
+  @page{ size: A4; margin: 10mm 12mm; }
+
+  @media print{
+    header.topbar, nav.tabs, .no-print, #login-screen, .suggest-box, .hint{ display:none !important; }
+    html, body{ background:#fff; font-size:9.5px; line-height:1.25; }
+    main{ max-width:100%; padding:0; margin:0; }
+
+    .panel{ border:none; box-shadow:none; padding:0; margin-bottom:7px; border-radius:0; }
+    .panel h2{
+      font-size:10px; margin:0 0 5px; padding-bottom:2px; border-bottom:1px solid var(--brand-petrol);
+      color:var(--brand-petrol); text-transform:uppercase; letter-spacing:.04em; font-weight:600;
+    }
+    .panel h3{ font-size:9px; }
+
+    .row{ gap:6px; margin-bottom:0; }
+    .field{ margin-bottom:5px; }
+    .field.empty-field{ display:none !important; }
+    label{ font-size:7px; margin-bottom:1px; letter-spacing:.02em; }
+    input, select, textarea, .static-value{ font-size:9px !important; padding:2px 4px !important; border:none; border-bottom:1px solid #bbb; border-radius:0; background:transparent; font-weight:400 !important; }
+
+    table{ font-size:8.5px; }
+    th, td{ padding:2px 4px; }
+    th{ font-size:7px; }
+    .qty-input{ font-size:9px !important; padding:2px 4px !important; text-align:left; font-weight:400 !important; }
+
+    body.hide-desc-print .col-desc{ display:none !important; }
+
+    .totals-bar{ margin-top:6px; padding-top:5px; gap:5px; }
+    .totals-bar > div{ padding:3px 8px; min-width:auto; }
+    .totals-bar .t-label{ font-size:6.5px; }
+    .totals-bar .t-value{ font-size:10px; }
+    .totals-bar .t-grand .t-value{ font-size:11px; }
+
+    .signoff{ margin-top:10px; gap:10px; }
+    .signoff .box{ padding-top:4px; font-size:8px; }
+    .signoff .box b{ font-size:8.5px; }
+
+    .print-only{ display:inline !important; }
+    .info-panel .obs-text{ font-size:7.5px !important; padding:4px 6px !important; }
+    .info-panel .obs-final{ font-size:7.5px !important; margin-top:6px !important; }
+    .desc-table td{ padding:3px 6px !important; font-size:7.5px !important; }
+    .desc-table .desc-nome{ width:110px; }
+
+    /* título do orçamento: proporção discreta, alinhado ao resto do documento impresso */
+    .print-heading{ display:flex !important; align-items:baseline; justify-content:space-between; margin-bottom:8px; padding-bottom:5px; border-bottom:2px solid var(--brand-orange); }
+    .print-heading .ph-logo{ font-size:14px; font-weight:700; color:var(--brand-petrol); }
+    .print-heading .ph-logo span{ color:var(--brand-orange); }
+    .print-heading .ph-meta{ font-size:8px; color:var(--slate); text-align:right; }
+
+    /* suggestion/autocomplete nunca deve aparecer impresso */
+    .suggest-box{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo brandfont">GART<span style="color:var(--brand-orange)">.</span></div>
+    <div class="login-sub">Formulário de Orçamento 2026 — acesso restrito</div>
+    <div class="field">
+      <label>Senha de acesso</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autofocus>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div id="app-shell">
+  <header class="topbar">
+    <div class="logo brandfont">GART<span>.</span> ORÇAMENTO 2026</div>
+    <nav class="tabs no-print">
+      <button id="tab-btn-orcamento" class="active" onclick="switchTab('orcamento')">Orçamento</button>
+      <button id="tab-btn-admin" onclick="switchTab('admin')">Administração</button>
+      <button class="btn-primary btn-sm" style="margin-left:8px" onclick="startNewQuote()">+ Novo Orçamento</button>
+      <button class="btn-ghost btn-sm" style="margin-left:8px;color:#cfeaef;border-color:#3d7a85" onclick="doLogout()">Sair</button>
+    </nav>
+  </header>
+  <main id="main-content"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="suggest-box" id="suggest-shared"></div>
+
+
+<script>
+const DEFAULT_CATALOG = {"revenda":[{"modelo":"WB5","codigo":"R160WB05","unidade":"peça","qtdCaixa":"36 peças","medidas":"13x50x2440","preco18":40.652804557894235,"preco12":37.90108215486949,"preco7":35.82431052994515,"ean":7897826100808,"ipi":0.0,"descricao":"Rodapé  WB5","nome2":"Rodapé ","unidQtdCx":"peça/36 peças"},{"modelo":"WB7","codigo":"R160WB07","unidade":"peça","qtdCaixa":"17 peças","medidas":"18x70x2440","preco18":56.955461813550464,"preco12":53.061515016817296,"preco7":50.205954032546295,"ean":7897826100501,"ipi":0.0,"descricao":"Rodapé  WB7","nome2":"Rodapé ","unidQtdCx":"peça/17 peças"},{"modelo":"WB11","codigo":"R160WB11","unidade":"peça","qtdCaixa":"12 peças","medidas":"18x110x2440","preco18":83.41825225059796,"preco12":77.70901825626042,"preco7":73.53281931595802,"ean":7897826100761,"ipi":0.0,"descricao":"Rodapé  WB11","nome2":"Rodapé ","unidQtdCx":"peça/12 peças"},{"modelo":"WB15","codigo":"R160WB15","unidade":"peça","qtdCaixa":"7 peças","medidas":"18x150x2440","preco18":130.00590372026463,"preco12":121.12770502371306,"preco7":114.63779369582447,"ean":7897826100747,"ipi":0.0,"descricao":"Rodapé  WB15","nome2":"Rodapé ","unidQtdCx":"peça/7 peças"},{"modelo":"WB20","codigo":"R160WB20","unidade":"peça","qtdCaixa":"7 peças","medidas":"14x200x2440","preco18":208.5078711424053,"preco12":194.28198551167347,"preco7":183.84620809642857,"ean":7897826100754,"ipi":0.0,"descricao":"Rodapé  WB20","nome2":"Rodapé ","unidQtdCx":"peça/7 peças"},{"modelo":"FB7","codigo":"R160FB07","unidade":"peça","qtdCaixa":"17 peças","medidas":"18x70x2440","preco18":56.955461813550464,"preco12":53.061515016817296,"preco7":50.205954032546295,"ean":7897826100471,"ipi":0.0,"descricao":"Rodapé  FB7","nome2":"Rodapé ","unidQtdCx":"peça/17 peças"},{"modelo":"FB11","codigo":"R160FB11","unidade":"peça","qtdCaixa":"12 peças","medidas":"18x110x2440","preco18":83.41825225059796,"preco12":77.70901825626042,"preco7":73.53281931595802,"ean":7897826100488,"ipi":0.0,"descricao":"Rodapé  FB11","nome2":"Rodapé ","unidQtdCx":"peça/12 peças"},{"modelo":"FB15","codigo":"R160FB15","unidade":"peça","qtdCaixa":"7 peças","medidas":"18x150x2440","preco18":130.00590372026463,"preco12":121.12770502371306,"preco7":114.63779369582447,"ean":7897826100495,"ipi":0.0,"descricao":"Rodapé  FB15","nome2":"Rodapé ","unidQtdCx":"peça/7 peças"},{"modelo":"FB20","codigo":"R160FB20","unidade":"peça","qtdCaixa":"7 peças","medidas":"14x200x2440","preco18":208.5078711424053,"preco12":194.28198551167347,"preco7":183.84620809642857,"ean":7897826100594,"ipi":0.0,"descricao":"Rodapé  FB20","nome2":"Rodapé ","unidQtdCx":"peça/7 peças"},{"modelo":"FD1","codigo":"R160FD01","unidade":"peça","qtdCaixa":"17 peças","medidas":"15x100x2440","preco18":81.72480931415288,"preco12":76.19636633113667,"preco7":72.11012586542901,"ean":7897826100235,"ipi":0.0,"descricao":"Rodapé  FD1","nome2":"Rodapé ","unidQtdCx":"peça/17 peças"},{"modelo":"FL1","codigo":"R160FL01","unidade":"peça","qtdCaixa":"25 peças","medidas":"12x80x2440","preco18":66.40477270695627,"preco12":61.887794422745806,"preco7":58.56495982286683,"ean":7897826100211,"ipi":0.0,"descricao":"Rodapé  FL1","nome2":"Rodapé ","unidQtdCx":"peça/25 peças"},{"modelo":"FL2","codigo":"R160FL02","unidade":"peça","qtdCaixa":"14 peças","medidas":"15x120x2440","preco18":89.50885703423972,"preco12":83.38238074071285,"preco7":78.91732174712553,"ean":7897826100440,"ipi":0.0,"descricao":"Rodapé  FL2","nome2":"Rodapé ","unidQtdCx":"peça/14 peças"},{"modelo":"FL3","codigo":"R160FL03","unidade":"peça","qtdCaixa":"30 peças","medidas":"17x55x2440","preco18":40.652804557894264,"preco12":37.90108215486949,"preco7":35.82431052994515,"ean":7897826100228,"ipi":0.0,"descricao":"Rodapé  FL3","nome2":"Rodapé ","unidQtdCx":"peça/30 peças"},{"modelo":"DB6","codigo":"R160DB06","unidade":"peça","qtdCaixa":"30 peças","medidas":"17x55x2440","preco18":40.652804557894264,"preco12":37.90108215486949,"preco7":35.82431052994515,"ean":7897826103748,"ipi":0.0,"descricao":"Rodapé  DB6","nome2":"Rodapé ","unidQtdCx":"peça/30 peças"},{"modelo":"DB7","codigo":"R160DB07","unidade":"peça","qtdCaixa":"17 peças","medidas":"18x70x2440","preco18":56.955461813550464,"preco12":53.061515016817296,"preco7":50.205954032546295,"ean":7897826103748,"ipi":0.0,"descricao":"Rodapé  DB7","nome2":"Rodapé ","unidQtdCx":"peça/17 peças"},{"modelo":"DB11","codigo":"R160DB11","unidade":"peça","qtdCaixa":"12 peças","medidas":"18x110x2440","preco18":83.41825225059796,"preco12":77.70901825626042,"preco7":73.53281931595802,"ean":7897826103762,"ipi":0.0,"descricao":"Rodapé  DB11","nome2":"Rodapé ","unidQtdCx":"peça/12 peças"},{"modelo":"RS1","codigo":"R160RS01","unidade":"peça","qtdCaixa":"15 peças","medidas":"18x110x2440","preco18":98.5168539573491,"preco12":91.78622591838973,"preco7":86.84681340592759,"ean":7897826103786,"ipi":0.0,"descricao":"Rodapé  RS1","nome2":"Rodapé ","unidQtdCx":"peça/15 peças"},{"modelo":"RS2","codigo":"R160RS02","unidade":"peça","qtdCaixa":"15 peças","medidas":"18x110x2440","preco18":98.5168539573491,"preco12":91.78622591838973,"preco7":86.84681340592759,"ean":7897826103793,"ipi":0.0,"descricao":"Rodapé  RS2","nome2":"Rodapé ","unidQtdCx":"peça/15 peças"},{"modelo":"FN3","codigo":"R167FN03","unidade":"peça","qtdCaixa":"50 peças","medidas":"13x30x2000","preco18":32.52224364631539,"preco12":30.320865723895597,"preco7":28.65944842395612,"ean":7897826109566,"ipi":0.0,"descricao":"Rodapé  FN3","nome2":"Rodapé ","unidQtdCx":"peça/50 peças"},{"modelo":"FN7","codigo":"R167FN07","unidade":"peça","qtdCaixa":"20 peças","medidas":"13x70x2000","preco18":38.042042688,"preco12":35.434438848000006,"preco7":33.551169408,"ean":7897826108156,"ipi":0.0,"descricao":"Rodapé  FN7","nome2":"Rodapé ","unidQtdCx":"peça/20 peças"},{"modelo":"FN10","codigo":"R167FN10","unidade":"peça","qtdCaixa":"16 peças","medidas":"13x100x2000","preco18":55.65785529600001,"preco12":51.891316416,"preco7":49.138845696000004,"ean":7897826108163,"ipi":0.0,"descricao":"Rodapé  FN10","nome2":"Rodapé ","unidQtdCx":"peça/16 peças"},{"modelo":"FN15","codigo":"R167FN15","unidade":"peça","qtdCaixa":"16 peças","medidas":"13x150x2000","preco18":84.54431116800001,"preco12":78.77860934400002,"preco7":74.54849644800001,"ean":7897826108347,"ipi":0.0,"descricao":"Rodapé  FN15","nome2":"Rodapé ","unidQtdCx":"peça/16 peças"},{"modelo":"FZ7","codigo":"R167FZ07","unidade":"peça","qtdCaixa":"20 peças","medidas":"13x70x2000","preco18":38.042042688,"preco12":35.434438848000006,"preco7":33.551169408,"ean":7897826108873,"ipi":0.0,"descricao":"Rodapé  FZ7","nome2":"Rodapé ","unidQtdCx":"peça/20 peças"},{"modelo":"FZ10","codigo":"R167FZ10","unidade":"peça","qtdCaixa":"16 peças","medidas":"13x100x2000","preco18":55.65785529600001,"preco12":51.891316416,"preco7":49.138845696000004,"ean":7897826108866,"ipi":0.0,"descricao":"Rodapé  FZ10","nome2":"Rodapé ","unidQtdCx":"peça/16 peças"},{"modelo":"FZ15","codigo":"R167FZ15","unidade":"peça","qtdCaixa":"16 peças","medidas":"13x150x2000","preco18":84.54431116800001,"preco12":78.77860934400002,"preco7":74.54849644800001,"ean":7897826108996,"ipi":0.0,"descricao":"Rodapé  FZ15","nome2":"Rodapé ","unidQtdCx":"peça/16 peças"},{"modelo":"FZ20","codigo":"R167FZ20","unidade":"peça","qtdCaixa":"16 peças","medidas":"14x200x2000","preco18":157.6319505836584,"preco12":146.87718104682514,"preco7":138.9877333209,"ean":null,"ipi":0.0,"descricao":"Rodapé  FZ20","nome2":"Rodapé ","unidQtdCx":"peça/16 peças"},{"modelo":"MFN7","codigo":null,"unidade":"peça","qtdCaixa":"-","medidas":"10x70x2400","preco18":38.802883541759996,"preco12":36.14312762496,"preco7":34.22219279616,"ean":null,"ipi":0.0,"descricao":"Rodapé Super Compac MFN7","nome2":"Rodapé Super Compac","unidQtdCx":"peça/-"},{"modelo":"MFN10","codigo":null,"unidade":"peça","qtdCaixa":"-","medidas":"10x100x2400","preco18":56.771012401920004,"preco12":52.92914274432,"preco7":50.12162260992,"ean":null,"ipi":0.0,"descricao":"Rodapé Super Compac MFN10","nome2":"Rodapé Super Compac","unidQtdCx":"peça/-"},{"modelo":"MFZ7","codigo":null,"unidade":"peça","qtdCaixa":"-","medidas":"10x70x2400","preco18":38.802883541759996,"preco12":36.14312762496,"preco7":34.22219279616,"ean":null,"ipi":0.0,"descricao":"Rodapé Super Compac MFZ7","nome2":"Rodapé Super Compac","unidQtdCx":"peça/-"},{"modelo":"MFZ10","codigo":null,"unidade":"peça","qtdCaixa":"-","medidas":"10x100x2400","preco18":56.771012401920004,"preco12":52.92914274432,"preco7":50.12162260992,"ean":null,"ipi":0.0,"descricao":"Rodapé Super Compac MFZ10","nome2":"Rodapé Super Compac","unidQtdCx":"peça/-"},{"modelo":"WB4G","codigo":"G160WB04","unidade":"peça","qtdCaixa":"36 peças","medidas":"13X50X2440","preco18":40.652804557894235,"preco12":37.90108215486949,"preco7":35.82431052994515,"ean":7897826103656,"ipi":0.0,"descricao":"Guarnição WB4G","nome2":"Guarnição","unidQtdCx":"peça/36 peças"},{"modelo":"FB7G","codigo":"G160FB07","unidade":"peça","qtdCaixa":"17 peças","medidas":"18x70x2440","preco18":56.955461813550464,"preco12":53.061515016817296,"preco7":50.205954032546295,"ean":7897826103618,"ipi":0.0,"descricao":"Guarnição FB7G","nome2":"Guarnição","unidQtdCx":"peça/17 peças"},{"modelo":"FB11G","codigo":"G160FB11","unidade":"peça","qtdCaixa":"12 peças","medidas":"18x110x2440","preco18":83.41825225059796,"preco12":77.70901825626042,"preco7":73.53281931595802,"ean":7897826103625,"ipi":0.0,"descricao":"Guarnição FB11G","nome2":"Guarnição","unidQtdCx":"peça/12 peças"},{"modelo":"WB7G","codigo":"G160WB07","unidade":"peça","qtdCaixa":"17 peças","medidas":"18x70x2440","preco18":56.955461813550464,"preco12":53.061515016817296,"preco7":50.205954032546295,"ean":7897826103632,"ipi":0.0,"descricao":"Guarnição WB7G","nome2":"Guarnição","unidQtdCx":"peça/17 peças"},{"modelo":"WB11","codigo":"G160WB11","unidade":"peça","qtdCaixa":"12 peças","medidas":"18x110x2440","preco18":83.41825225059796,"preco12":77.70901825626042,"preco7":73.53281931595802,"ean":7897826103649,"ipi":0.0,"descricao":"Guarnição WB11","nome2":"Guarnição","unidQtdCx":"peça/12 peças"},{"modelo":"FN7 - PRETO","codigo":"R167FN07-003","unidade":"peça","qtdCaixa":"20 peças","medidas":"13X50X2000","preco18":44.354459520000006,"preco12":41.35634496000001,"preco7":39.12665472000001,"ean":7897826108378,"ipi":0.0,"descricao":"Rodapé Compac color FN7 - PRETO","nome2":"Rodapé Compac color","unidQtdCx":"peça/20 peças"},{"modelo":"FN10 - PRETO","codigo":"R167FN10-003","unidade":"peça","qtdCaixa":"16 peças","medidas":"18x70x2000","preco18":64.90036224,"preco12":60.47877312000001,"preco7":57.22871616000001,"ean":7897826108354,"ipi":0.0,"descricao":"Rodapé Compac color FN10 - PRETO","nome2":"Rodapé Compac color","unidQtdCx":"peça/16 peças"},{"modelo":"FZ7 - PRETO","codigo":"R167FN07-003","unidade":"peça","qtdCaixa":"20 peças","medidas":"18x110x2000","preco18":44.354459520000006,"preco12":41.35634496000001,"preco7":39.12665472000001,"ean":7897826108910,"ipi":0.0,"descricao":"Rodapé Compac color FZ7 - PRETO","nome2":"Rodapé Compac color","unidQtdCx":"peça/20 peças"},{"modelo":"FZ10 - PRETO","codigo":"R167FN10-003","unidade":"peça","qtdCaixa":"16 peças","medidas":"18x70x2000","preco18":64.90036224,"preco12":60.47877312000001,"preco7":57.22871616000001,"ean":7897826108880,"ipi":0.0,"descricao":"Rodapé Compac color FZ10 - PRETO","nome2":"Rodapé Compac color","unidQtdCx":"peça/16 peças"},{"modelo":"FN7 - CINZA","codigo":"R167FN07-010","unidade":"peça","qtdCaixa":"20 peças","medidas":"18x110x2000","preco18":44.354459520000006,"preco12":41.35634496000001,"preco7":39.12665472000001,"ean":7897826108385,"ipi":0.0,"descricao":"Rodapé Compac color FN7 - CINZA","nome2":"Rodapé Compac color","unidQtdCx":"peça/20 peças"},{"modelo":"FN10 - CINZA","codigo":"R167FN10-010","unidade":"peça","qtdCaixa":"16 peças","medidas":"18x110x2000","preco18":64.90036224,"preco12":60.47877312000001,"preco7":57.22871616000001,"ean":7897826108361,"ipi":0.0,"descricao":"Rodapé Compac color FN10 - CINZA","nome2":"Rodapé Compac color","unidQtdCx":"peça/16 peças"},{"modelo":"FZ7 - CINZA","codigo":"R167FN07-010","unidade":"peça","qtdCaixa":"20 peças","medidas":"18x110x2000","preco18":44.354459520000006,"preco12":41.35634496000001,"preco7":39.12665472000001,"ean":7897826108903,"ipi":0.0,"descricao":"Rodapé Compac color FZ7 - CINZA","nome2":"Rodapé Compac color","unidQtdCx":"peça/20 peças"},{"modelo":"FZ10 - CINZA","codigo":"R167FN10-010","unidade":"peça","qtdCaixa":"16 peças","medidas":"18x110x2000","preco18":64.90036224,"preco12":60.47877312000001,"preco7":57.22871616000001,"ean":7897826108897,"ipi":0.0,"descricao":"Rodapé Compac color FZ10 - CINZA","nome2":"Rodapé Compac color","unidQtdCx":"peça/16 peças"},{"modelo":"S3","codigo":"M16000S3","unidade":"1 barra de 2,00m","qtdCaixa":"40 kits","medidas":"20x30x2000mm","preco18":38.724480000000014,"preco12":36.13507200000001,"preco7":34.175520000000006,"ean":"Isento","ipi":0.0,"descricao":"Boiserie S3","nome2":"Boiserie","unidQtdCx":"1 barra de 2,00m/40 kits"},{"modelo":"S4","codigo":"M16000S4","unidade":"1 barra de 2,00m","qtdCaixa":"40 kits","medidas":"20x40x2000mm","preco18":41.593824,"preco12":38.747808000000006,"preco7":31.656096000000005,"ean":"Isento","ipi":0.0,"descricao":"Boiserie S4","nome2":"Boiserie","unidQtdCx":"1 barra de 2,00m/40 kits"},{"modelo":"S8","codigo":"M16000S8","unidade":"1 barra de 2,00m","qtdCaixa":"20 kits","medidas":"20x80x2000mm","preco18":77.37897600000002,"preco12":72.10684800000001,"preco7":68.211072,"ean":"Isento","ipi":0.0,"descricao":"Boiserie S8","nome2":"Boiserie","unidQtdCx":"1 barra de 2,00m/20 kits"},{"modelo":"SP2N","codigo":"M1600SP2","unidade":"2 barras de 2,00m","qtdCaixa":"40 kits","medidas":"10x21x2000mm","preco18":43.250112,"preco12":40.26412800000001,"preco7":38.117952,"ean":"Isento","ipi":0.0,"descricao":"Boiserie SP2N","nome2":"Boiserie","unidQtdCx":"2 barras de 2,00m/40 kits"},{"modelo":"SP3N","codigo":"M1600SP3","unidade":"2 barras de 2,00m","qtdCaixa":"40 kits","medidas":"13x23x2000mm","preco18":53.047872000000005,"preco12":49.40870400000001,"preco7":46.795968,"ean":"Isento","ipi":0.0,"descricao":"Boiserie SP3N","nome2":"Boiserie","unidQtdCx":"2 barras de 2,00m/40 kits"},{"modelo":"S2","codigo":"M16000S2","unidade":"2 barras de 2,00m","qtdCaixa":"40 kits","medidas":"10x25x2000mm","preco18":50.38848000000001,"preco12":46.982592000000004,"preco7":44.463168,"ean":"Isento","ipi":0.0,"descricao":"Boiserie S2","nome2":"Boiserie","unidQtdCx":"2 barras de 2,00m/40 kits"},{"modelo":"Z101","codigo":"Q170Z101","unidade":"4 cantos","qtdCaixa":"10 kits","medidas":"200x200 - S4","preco18":83.42092800000002,"preco12":77.72889600000002,"preco7":73.55318400000002,"ean":"Isento","ipi":0.0,"descricao":"Aplique Z101","nome2":"Aplique","unidQtdCx":"4 cantos/10 kits"},{"modelo":"Z102","codigo":"Q170Z102","unidade":"4 cantos","qtdCaixa":"10 kits","medidas":"200x200 - S4","preco18":83.42092800000002,"preco12":77.72889600000002,"preco7":73.55318400000002,"ean":"Isento","ipi":0.0,"descricao":"Aplique Z102","nome2":"Aplique","unidQtdCx":"4 cantos/10 kits"},{"modelo":"Boiserie S4 100","codigo":"B170S410","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"5 kits","medidas":"quadro: 100x80cm seção: 20x40mm","preco18":102.03135321599999,"preco12":95.08167047808,"preco7":89.96085161855999,"ean":7897826103168,"ipi":0.0,"descricao":"Kit Boiserie Boiserie S4 100","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/5 kits"},{"modelo":"Boiserie S4 80","codigo":"B170S480","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"5 kits","medidas":"quadro: 80x60cm seção: 20x40mm","preco18":85.50740764800001,"preco12":79.6678773696,"preco7":75.39250698720001,"ean":7897826103175,"ipi":0.0,"descricao":"Kit Boiserie Boiserie S4 80","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/5 kits"},{"modelo":"Boiserie S4 60","codigo":"B170S460","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"5 kits","medidas":"quadro: 60x40cm seção: 20x40mm","preco18":63.528955776000004,"preco12":59.187810464639995,"preco7":56.011362675840004,"ean":7897826103182,"ipi":0.0,"descricao":"Kit Boiserie Boiserie S4 60","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/5 kits"},{"modelo":"Boiserie SP2 100","codigo":"B17SP210","unidade":"2 barras de 1,00m      2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 100x80cm seção: 10x21mm","preco18":54.8980016832,"preco12":51.149793292416,"preco7":48.404893208256,"ean":7897826103199,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP2 100","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m      2 barras de 0,80m/7 kits"},{"modelo":"Boiserie SP2 80","codigo":"B17SP280","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 80x60cm seção: 10x21mm","preco18":46.1226636,"preco12":42.974290476,"preco7":40.668157296,"ean":7897826103205,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP2 80","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/7 kits"},{"modelo":"Boiserie SP2 60","codigo":"B17SP260","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 60x40cm seção: 10x21mm","preco18":34.652157696,"preco12":32.291479452960004,"preco7":30.55887156816,"ean":7897826103212,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP2 60","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/7 kits"},{"modelo":"Boiserie SP3 100","codigo":"B17SP310","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 100x80cm seção: 13x23mm","preco18":66.1759956,"preco12":61.6639959,"preco7":58.35519611999999,"ean":7897826103229,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP3 100","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/7 kits"},{"modelo":"Boiserie SP3 80","codigo":"B17SP380","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 80x60cm seção: 13x23mm","preco18":54.224209728000005,"preco12":50.53279237344,"preco7":47.800726421760004,"ean":7897826103236,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP3 80","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/7 kits"},{"modelo":"Boiserie SP3 60","codigo":"B17SP360","unidade":"2 barras de 1,00m       2 barras de 0,80m","qtdCaixa":"7 kits","medidas":"quadro: 60x40cm seção: 13x23mm","preco18":41.14943726399999,"preco12":38.3339494512,"preco7":36.276477588000006,"ean":7897826103243,"ipi":0.0,"descricao":"Kit Boiserie Boiserie SP3 60","nome2":"Kit Boiserie","unidQtdCx":"2 barras de 1,00m       2 barras de 0,80m/7 kits"},{"modelo":"KIT GUARNIÇÃO WB4","codigo":"K158WB04","unidade":"2 PÇS 2,44 1PÇ 1,00","qtdCaixa":"16 kits","medidas":"13x50xvariavel","preco18":100.60200000000002,"preco12":93.744,"preco7":88.7112,"ean":7897826103267,"ipi":0.0,"descricao":"Kit Guarnição  KIT GUARNIÇÃO WB4","nome2":"Kit Guarnição ","unidQtdCx":"2 PÇS 2,44 1PÇ 1,00/16 kits"},{"modelo":"KIT LAMBRI","codigo":"K158LMBR","unidade":"10 Pçs de 0,80 FD1  1PÇ WB7","qtdCaixa":"6 kits","medidas":"18x110x2440","preco18":240.19200000000004,"preco12":223.81920000000002,"preco7":212.6304,"ean":7897826108798,"ipi":0.0,"descricao":"Kit Lambri  KIT LAMBRI","nome2":"Kit Lambri ","unidQtdCx":"10 Pçs de 0,80 FD1  1PÇ WB7/6 kits"},{"modelo":"KIT FN7","codigo":"K158FN07","unidade":"4 PÇS 2,00","qtdCaixa":"6 kits","medidas":"18x110x2440","preco18":134.2656,"preco12":125.118,"preco7":118.38960000000002,"ean":7897826108200,"ipi":0.0,"descricao":"Kit FN7 KIT FN7","nome2":"Kit FN7","unidQtdCx":"4 PÇS 2,00/6 kits"},{"modelo":"KIT FN10","codigo":"K158FN10","unidade":"4 PÇS 2,00","qtdCaixa":"4 kits","medidas":"18x110x2440","preco18":196.25760000000002,"preco12":182.8872,"preco7":173.0484,"ean":7897826108217,"ipi":0.0,"descricao":"Kit FN10 KIT FN10","nome2":"Kit FN10","unidQtdCx":"4 PÇS 2,00/4 kits"},{"modelo":"RR30","codigo":"T160RR30","unidade":"1 peça","qtdCaixa":"7 peças","medidas":"300 MM","preco18":33.43003488000001,"preco12":31.153066560000006,"preco7":29.462590080000005,"ean":7897826100099,"ipi":0.0,"descricao":"Roseta RR30","nome2":"Roseta","unidQtdCx":"1 peça/7 peças"},{"modelo":"RL30","codigo":"T160RL30","unidade":"1 peça","qtdCaixa":"6 peças","medidas":"300 MM","preco18":34.822953000000005,"preco12":32.451111000000004,"preco7":30.690198000000006,"ean":7897826100105,"ipi":0.0,"descricao":"Roseta RL30","nome2":"Roseta","unidQtdCx":"1 peça/6 peças"},{"modelo":"RF30","codigo":"T160RF30","unidade":"1 peça","qtdCaixa":"7 peças","medidas":"300 MM","preco18":34.822953000000005,"preco12":32.451111000000004,"preco7":30.690198000000006,"ean":7897826100112,"ipi":0.0,"descricao":"Roseta RF30","nome2":"Roseta","unidQtdCx":"1 peça/7 peças"},{"modelo":"R28","codigo":"T1600R28","unidade":"1 peça","qtdCaixa":"8 peças","medidas":"280 MM","preco18":33.026103000000006,"preco12":30.780040500000005,"preco7":29.10897000000001,"ean":7897826100082,"ipi":0.0,"descricao":"Roseta R28","nome2":"Roseta","unidQtdCx":"1 peça/8 peças"},{"modelo":"R20","codigo":"T1600R20","unidade":"1 peça","qtdCaixa":"8 peças","medidas":"200 MM","preco18":32.34976866000002,"preco12":30.13748694000001,"preco7":28.526790600000005,"ean":7897826100075,"ipi":0.0,"descricao":"Roseta R20","nome2":"Roseta","unidQtdCx":"1 peça/8 peças"},{"modelo":"Guia de Corte","codigo":"S30PCO01","unidade":"1 peça","qtdCaixa":"8 peças","medidas":null,"preco18":31.8492,"preco12":29.6676,"preco7":28.080000000000002,"ean":7897826101058,"ipi":0.0,"descricao":"Guia de Corte Guia de Corte","nome2":"Guia de Corte","unidQtdCx":"1 peça/8 peças"},{"modelo":"GARTFIX 5,00","codigo":"C3525000","unidade":"pote","qtdCaixa":"4 potes","medidas":null,"preco18":164.43,"preco12":153.22608000000002,"preco7":144.98190000000002,"ean":7897826100167,"ipi":0.0,"descricao":"Cola  GARTFIX 5,00","nome2":"Cola ","unidQtdCx":"pote/4 potes"},{"modelo":"GARTFIX 1,00","codigo":"C3521000","unidade":"pote","qtdCaixa":"12 potes","medidas":null,"preco18":39.98484,"preco12":31.513860000000005,"preco7":29.824200000000005,"ean":7897826107937,"ipi":0.0,"descricao":"Cola  GARTFIX 1,00","nome2":"Cola ","unidQtdCx":"pote/12 potes"},{"modelo":"GARTFIX 0,40","codigo":"C3520400","unidade":"bisnaga","qtdCaixa":"24 bisnagas","medidas":null,"preco18":25.367580000000004,"preco12":23.258340000000004,"preco7":21.9996,"ean":7897826107944,"ipi":0.0,"descricao":"Cola  GARTFIX 0,40","nome2":"Cola ","unidQtdCx":"bisnaga/24 bisnagas"},{"modelo":"F","codigo":"M560000F","unidade":"2 barras ( 4m ) ","qtdCaixa":"32 Kits","medidas":"30x35x2000mm","preco18":21.986640000000005,"preco12":21.170160000000003,"preco7":19.933776,"ean":7897826109481,"ipi":0.0325,"descricao":"Rodateto Nac F","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /32 Kits"},{"modelo":"D","codigo":"M560000D","unidade":"2 barras ( 4m ) ","qtdCaixa":"18 kits","medidas":"40x500x2000mm","preco18":29.533248000000004,"preco12":28.436832000000003,"preco7":26.780544000000003,"ean":7897826109474,"ipi":0.0325,"descricao":"Rodateto Nac D","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /18 kits"},{"modelo":"C","codigo":"M560000C","unidade":"2 barras ( 4m ) ","qtdCaixa":"10 kits","medidas":"65x80x2000mm","preco18":72.795024,"preco12":70.10064000000001,"preco7":66.00657600000001,"ean":7897826109443,"ipi":0.0325,"descricao":"Rodateto Nac C","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /10 kits"},{"modelo":"J","codigo":"M560000J","unidade":"2 barras ( 4m ) ","qtdCaixa":"18 kits","medidas":"50x45x2000mm","preco18":35.31859200000001,"preco12":34.012224,"preco7":32.02934400000001,"ean":7897826109511,"ipi":0.0325,"descricao":"Rodateto Nac J","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /18 kits"},{"modelo":"A2","codigo":"M56000A2","unidade":"2 barras ( 4m )","qtdCaixa":"18 kits","medidas":"50x50x2000mm","preco18":32.110992,"preco12":30.921264000000008,"preco7":29.113344,"ean":7897826109405,"ipi":0.0325,"descricao":"Rodateto Nac A2","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m )/18 kits"},{"modelo":"A3","codigo":"M56000A3","unidade":"2 barras (4m)","qtdCaixa":"35 kits","medidas":"30x30x2000mm","preco18":21.904992000000004,"preco12":21.100176000000005,"preco7":19.863792000000004,"ean":7897826109436,"ipi":0.0325,"descricao":"Rodateto Nac A3","nome2":"Rodateto Nac","unidQtdCx":"2 barras (4m)/35 kits"},{"modelo":"M2","codigo":"M56000M2","unidade":"2 barras ( 4m ) ","qtdCaixa":"24 kits","medidas":"20x60x2000mm","preco18":38.071296000000004,"preco12":36.659952000000004,"preco7":34.52544,"ean":7897826109559,"ipi":0.0325,"descricao":"Rodateto Nac M2","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /24 kits"},{"modelo":"K1","codigo":"M56000K1","unidade":"2 barras ( 4m ) ","qtdCaixa":"50 kits","medidas":"20x30x2000mm","preco18":22.161600000000004,"preco12":21.345120000000005,"preco7":20.097072000000004,"ean":7897826109528,"ipi":0.0325,"descricao":"Rodateto Nac K1","nome2":"Rodateto Nac","unidQtdCx":"2 barras ( 4m ) /50 kits"},{"modelo":"A","codigo":"M250000A","unidade":"Metro","qtdCaixa":"60 Metros","medidas":"110x110","preco18":34.02388800000001,"preco12":28.996704,"preco7":28.996704,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp A","nome2":"Rodateto Imp","unidQtdCx":"Metro/60 Metros"},{"modelo":"A1","codigo":"M25000A1","unidade":"Metro","qtdCaixa":"110 Metros","medidas":"80x80","preco18":24.191136000000004,"preco12":20.668608,"preco7":20.668608,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp A1","nome2":"Rodateto Imp","unidQtdCx":"Metro/110 Metros"},{"modelo":"AT","codigo":"M25000AT","unidade":"Metro","qtdCaixa":"84 Metros","medidas":"95x100","preco18":29.848176000000002,"preco12":25.485840000000003,"preco7":25.485840000000003,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp AT","nome2":"Rodateto Imp","unidQtdCx":"Metro/84 Metros"},{"modelo":"B1","codigo":"M25000B1","unidade":"Metro","qtdCaixa":"150 Metros","medidas":"80x65","preco18":23.677920000000004,"preco12":20.237040000000004,"preco7":20.237040000000004,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp B1","nome2":"Rodateto Imp","unidQtdCx":"Metro/150 Metros"},{"modelo":"B2","codigo":"M25000B2","unidade":"Metro","qtdCaixa":"190 Metros","medidas":"35x35","preco18":8.258112,"preco12":7.045056000000001,"preco7":7.045056000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp B2","nome2":"Rodateto Imp","unidQtdCx":"Metro/190 Metros"},{"modelo":"B5","codigo":"M25000B5","unidade":"Metro","qtdCaixa":"96 Metros","medidas":"50x50","preco18":11.827296000000002,"preco12":10.112688,"preco7":10.112688,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp B5","nome2":"Rodateto Imp","unidQtdCx":"Metro/96 Metros"},{"modelo":"B8","codigo":"M25000B8","unidade":"Metro","qtdCaixa":"130 Metros","medidas":"82x82","preco18":32.56588800000001,"preco12":27.806976000000006,"preco7":27.806976000000006,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp B8","nome2":"Rodateto Imp","unidQtdCx":"Metro/130 Metros"},{"modelo":"E","codigo":"M250000E","unidade":"Metro","qtdCaixa":"352 Metros","medidas":"20x25","preco18":4.105728,"preco12":3.510864,"preco7":3.510864,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp E","nome2":"Rodateto Imp","unidQtdCx":"Metro/352 Metros"},{"modelo":"GT","codigo":"M25000GT","unidade":"Metro","qtdCaixa":"92 Metros","medidas":"50x120","preco18":35.28360000000001,"preco12":30.139776000000005,"preco7":30.139776000000005,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp GT","nome2":"Rodateto Imp","unidQtdCx":"Metro/92 Metros"},{"modelo":"GR","codigo":"M25000GR","unidade":"Metro","qtdCaixa":"108 Metros","medidas":"80x85","preco18":32.659200000000006,"preco12":27.888624000000004,"preco7":27.888624000000004,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp GR","nome2":"Rodateto Imp","unidQtdCx":"Metro/108 Metros"},{"modelo":"GO","codigo":"M25000GO","unidade":"Metro","qtdCaixa":"110 Metros","medidas":"80x80","preco18":32.56588800000001,"preco12":27.806976000000006,"preco7":27.806976000000006,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp GO","nome2":"Rodateto Imp","unidQtdCx":"Metro/110 Metros"},{"modelo":"GP","codigo":"M25000GP","unidade":"Metro","qtdCaixa":"96 Metros","medidas":"100x100","preco18":36.03009600000001,"preco12":30.781296,"preco7":30.781296,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp GP","nome2":"Rodateto Imp","unidQtdCx":"Metro/96 Metros"},{"modelo":"H","codigo":"M250000H","unidade":"Metro","qtdCaixa":"100 Metros","medidas":"50x40","preco18":11.290752000000001,"preco12":9.646128000000001,"preco7":9.646128000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp H","nome2":"Rodateto Imp","unidQtdCx":"Metro/100 Metros"},{"modelo":"I","codigo":"M250000I","unidade":"Metro","qtdCaixa":"204 Metros","medidas":"15x40","preco18":10.789200000000001,"preco12":9.214560000000002,"preco7":9.214560000000002,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp I","nome2":"Rodateto Imp","unidQtdCx":"Metro/204 Metros"},{"modelo":"K","codigo":"M250000K","unidade":"Metro","qtdCaixa":"160 Metros","medidas":"70x70","preco18":26.803872000000002,"preco12":22.884768000000005,"preco7":22.884768000000005,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp K","nome2":"Rodateto Imp","unidQtdCx":"Metro/160 Metros"},{"modelo":"M1","codigo":"M25000M1","unidade":"Metro","qtdCaixa":"84 Metros","medidas":"30x120","preco18":35.715168000000006,"preco12":30.501360000000002,"preco7":30.501360000000002,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp M1","nome2":"Rodateto Imp","unidQtdCx":"Metro/84 Metros"},{"modelo":"N","codigo":"M250000N","unidade":"Metro","qtdCaixa":"90 Metros","medidas":"20x70","preco18":14.918256000000001,"preco12":12.748752000000001,"preco7":12.748752000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp N","nome2":"Rodateto Imp","unidQtdCx":"Metro/90 Metros"},{"modelo":"NE1","codigo":"M2500NE1","unidade":"Metro","qtdCaixa":"220 Metros","medidas":"40x40","preco18":11.150784000000002,"preco12":9.529488,"preco7":9.529488,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp NE1","nome2":"Rodateto Imp","unidQtdCx":"Metro/220 Metros"},{"modelo":"NE2","codigo":"M2500NE2","unidade":"Metro","qtdCaixa":"120 Metros","medidas":"60x60","preco18":23.106384000000002,"preco12":19.747152000000003,"preco7":19.747152000000003,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp NE2","nome2":"Rodateto Imp","unidQtdCx":"Metro/120 Metros"},{"modelo":"NE3","codigo":"M2500NE3","unidade":"Metro","qtdCaixa":"70 Metros","medidas":"82x82","preco18":29.474928000000006,"preco12":25.182576,"preco7":25.182576,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp NE3","nome2":"Rodateto Imp","unidQtdCx":"Metro/70 Metros"},{"modelo":"NE4","codigo":"M2500NE4","unidade":"Metro","qtdCaixa":"110 Metros","medidas":"100x100","preco18":31.866048000000003,"preco12":27.212112,"preco7":27.212112,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp NE4","nome2":"Rodateto Imp","unidQtdCx":"Metro/110 Metros"},{"modelo":"O","codigo":"M250000O","unidade":"Metro","qtdCaixa":"130 Metros","medidas":"20x40","preco18":10.789200000000001,"preco12":9.214560000000002,"preco7":9.214560000000002,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp O","nome2":"Rodateto Imp","unidQtdCx":"Metro/130 Metros"},{"modelo":"QR","codigo":"M25000QR","unidade":"Metro","qtdCaixa":"240 Metros","medidas":"20x20","preco18":6.170256000000001,"preco12":5.248800000000001,"preco7":5.248800000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp QR","nome2":"Rodateto Imp","unidQtdCx":"Metro/240 Metros"},{"modelo":"SM","codigo":"M25000SM","unidade":"Metro","qtdCaixa":"84 Metros","medidas":"95x105","preco18":29.848176000000002,"preco12":25.485840000000003,"preco7":25.485840000000003,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp SM","nome2":"Rodateto Imp","unidQtdCx":"Metro/84 Metros"},{"modelo":"ST2","codigo":"M2500ST2","unidade":"Metro","qtdCaixa":"136 Metros","medidas":"50x50","preco18":14.918256000000001,"preco12":12.748752000000001,"preco7":12.748752000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp ST2","nome2":"Rodateto Imp","unidQtdCx":"Metro/136 Metros"},{"modelo":"ST3","codigo":"M2500ST3","unidade":"Metro","qtdCaixa":"84 Metros","medidas":"75x75","preco18":29.848176000000002,"preco12":25.485840000000003,"preco7":25.485840000000003,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp ST3","nome2":"Rodateto Imp","unidQtdCx":"Metro/84 Metros"},{"modelo":"ST4","codigo":"M2500ST4","unidade":"Metro","qtdCaixa":"40 Metros","medidas":"130x130","preco18":52.837920000000004,"preco12":45.12801600000001,"preco7":45.12801600000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp ST4","nome2":"Rodateto Imp","unidQtdCx":"Metro/40 Metros"},{"modelo":"TI","codigo":"M25000TI","unidade":"Metro","qtdCaixa":"52 Metros","medidas":"140x140","preco18":47.92737600000001,"preco12":40.928976000000006,"preco7":40.928976000000006,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp TI","nome2":"Rodateto Imp","unidQtdCx":"Metro/52 Metros"},{"modelo":"TL","codigo":"M25000TL","unidade":"Metro","qtdCaixa":"36 Metros","medidas":"145x155","preco18":52.56964800000001,"preco12":44.894736,"preco7":44.894736,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp TL","nome2":"Rodateto Imp","unidQtdCx":"Metro/36 Metros"},{"modelo":"T4","codigo":"M25000T4","unidade":"Metro","qtdCaixa":"170 Metros","medidas":"20x30","preco18":8.339760000000002,"preco12":7.126704000000001,"preco7":7.126704000000001,"ean":null,"ipi":0.0325,"descricao":"Rodateto Imp T4","nome2":"Rodateto Imp","unidQtdCx":"Metro/170 Metros"},{"modelo":"WB5C","codigo":"R150WB05-XXX","unidade":"Metro","qtdCaixa":"97.60 Metros","medidas":"13x50x2440","preco18":18.66647446685339,"preco12":17.40297108659384,"preco7":16.449383629794184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB5C","nome2":"Rodapé Color","unidQtdCx":"Metro/97.60 Metros"},{"modelo":"WB7C","codigo":"R150WB07-XXX","unidade":"Metro","qtdCaixa":"51.24 Metros","medidas":"18x70x2440","preco18":26.152136002730753,"preco12":24.364159521231386,"preco7":23.05297676813184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB7C","nome2":"Rodapé Color","unidQtdCx":"Metro/51.24 Metros"},{"modelo":"WB11C","codigo":"R150WB11-XXX","unidade":"Metro","qtdCaixa":"36.60 Metros","medidas":"18x110x2440","preco18":38.30300744657845,"preco12":35.68150883806737,"preco7":33.76393115221206,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB11C","nome2":"Rodapé Color","unidQtdCx":"Metro/36.60 Metros"},{"modelo":"WB15C","codigo":"R150WB15-XXX","unidade":"Metro","qtdCaixa":"24.40 Metros","medidas":"18x150x2440","preco18":59.69457479565889,"preco12":55.61798841784032,"preco7":52.63802761534137,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB15C","nome2":"Rodapé Color","unidQtdCx":"Metro/24.40 Metros"},{"modelo":"WB20C","codigo":"R150WB20-XXX","unidade":"Metro","qtdCaixa":"17.08 Metros","medidas":"18x200x2440","preco18":95.7401806626861,"preco12":89.20810658360845,"preco7":84.4163296131901,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB20C","nome2":"Rodapé Color","unidQtdCx":"Metro/17.08 Metros"},{"modelo":"FB7C","codigo":"R150FB07-XXX","unidade":"Metro","qtdCaixa":"53.68 Metros","medidas":"18x70x2440","preco18":26.152136002730753,"preco12":24.364159521231386,"preco7":23.05297676813184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FB7C","nome2":"Rodapé Color","unidQtdCx":"Metro/53.68 Metros"},{"modelo":"FB11C","codigo":"R150FB11-XXX","unidade":"Metro","qtdCaixa":"36.60 Metros","medidas":"18x110x2440","preco18":38.30300744657845,"preco12":35.68150883806737,"preco7":33.76393115221206,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FB11C","nome2":"Rodapé Color","unidQtdCx":"Metro/36.60 Metros"},{"modelo":"FB15C","codigo":"R150FB15-XXX","unidade":"Metro","qtdCaixa":"24.40 Metros","medidas":"18x150x2440","preco18":59.69457479565889,"preco12":55.61798841784032,"preco7":52.63802761534137,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FB15C","nome2":"Rodapé Color","unidQtdCx":"Metro/24.40 Metros"},{"modelo":"FB20C","codigo":"R150FB20-XXX","unidade":"Metro","qtdCaixa":"17.08 Metros","medidas":"18x200x2440","preco18":95.7401806626861,"preco12":89.20810658360845,"preco7":84.4163296131901,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FB20C","nome2":"Rodapé Color","unidQtdCx":"Metro/17.08 Metros"},{"modelo":"FD1C","codigo":"R150FD01-XXX","unidade":"Metro","qtdCaixa":"43.92 Metros","medidas":"15x100x2440","preco18":37.61902517074668,"preco12":35.044339037387594,"preco7":33.16100381020827,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FD1C","nome2":"Rodapé Color","unidQtdCx":"Metro/43.92 Metros"},{"modelo":"FL1C","codigo":"R150FL01-XXX","unidade":"Metro","qtdCaixa":"68.32 Metros","medidas":"12x80x2440","preco18":30.49095893116921,"preco12":28.41690621262994,"preco7":26.89116628175048,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FL1C","nome2":"Rodapé Color","unidQtdCx":"Metro/68.32 Metros"},{"modelo":"FL2C","codigo":"R150FL02-XXX","unidade":"Metro","qtdCaixa":"34.16 Metros","medidas":"15x120x2440","preco18":41.09961938806545,"preco12":38.28653639050645,"preco7":36.236323358387175,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FL2C","nome2":"Rodapé Color","unidQtdCx":"Metro/34.16 Metros"},{"modelo":"FL3C","codigo":"R150FL03-XXX","unidade":"Metro","qtdCaixa":"126.88 Metros","medidas":"17x55x2440","preco18":18.66647446685339,"preco12":17.40297108659384,"preco7":16.449383629794184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FL3C","nome2":"Rodapé Color","unidQtdCx":"Metro/126.88 Metros"},{"modelo":"DB6C","codigo":"R150DB06-XXX","unidade":"Metro","qtdCaixa":"126.88 Metros","medidas":"17x55x2440","preco18":18.66647446685339,"preco12":17.40297108659384,"preco7":16.449383629794184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color DB6C","nome2":"Rodapé Color","unidQtdCx":"Metro/126.88 Metros"},{"modelo":"DB7C","codigo":"R150DB07-XXX","unidade":"Metro","qtdCaixa":"58,56 Metros","medidas":"18x70x2440","preco18":26.152136002730753,"preco12":24.364159521231386,"preco7":23.05297676813184,"ean":null,"ipi":0.0,"descricao":"Rodapé Color DB7C","nome2":"Rodapé Color","unidQtdCx":"Metro/58,56 Metros"},{"modelo":"DB11C","codigo":"R150DB11-XXX","unidade":"Metro","qtdCaixa":"36.60 Metros","medidas":"18x110x2440","preco18":38.30300744657845,"preco12":35.68150883806737,"preco7":33.76393115221206,"ean":null,"ipi":0.0,"descricao":"Rodapé Color DB11C","nome2":"Rodapé Color","unidQtdCx":"Metro/36.60 Metros"},{"modelo":"RS1C","codigo":"R150RS01-XXX","unidade":"Metro","qtdCaixa":"53,68 Metros","medidas":"18x110x2440","preco18":45.23580498193398,"preco12":42.145314724215076,"preco7":39.87729364798588,"ean":null,"ipi":0.0,"descricao":"Rodapé Color RS1C","nome2":"Rodapé Color","unidQtdCx":"Metro/53,68 Metros"},{"modelo":"RS2C","codigo":"R150RS02-XXX","unidade":"Metro","qtdCaixa":"53,68 Metros","medidas":"18x110x2440","preco18":45.23580498193398,"preco12":42.145314724215076,"preco7":39.87729364798588,"ean":null,"ipi":0.0,"descricao":"Rodapé Color RS2C","nome2":"Rodapé Color","unidQtdCx":"Metro/53,68 Metros"},{"modelo":"FN3C","codigo":"R167FN03-XXX","unidade":"Metro","qtdCaixa":"124 Metros ","medidas":"13x30x2000","preco18":18.21245644193662,"preco12":16.979684805381535,"preco7":16.04929111741543,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FN3C","nome2":"Rodapé Color","unidQtdCx":"Metro/124 Metros "},{"modelo":"FN7C","codigo":"R157FN07-XXX","unidade":"Metro","qtdCaixa":"60 Metros","medidas":"13x70x2000","preco18":21.306162240000003,"preco12":19.8454212,"preco7":18.783064080000003,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FN7C","nome2":"Rodapé Color","unidQtdCx":"Metro/60 Metros"},{"modelo":"FN10C","codigo":"R157FN10-XXX","unidade":"Metro","qtdCaixa":"40 Metros","medidas":"13x100x2000","preco18":31.177230480000002,"preco12":29.03776128,"preco7":27.473735520000005,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FN10C","nome2":"Rodapé Color","unidQtdCx":"Metro/40 Metros"},{"modelo":"FN15C","codigo":"R157FN15-XXX","unidade":"Metro","qtdCaixa":"24 Metros","medidas":"13x150x2000","preco18":47.36342160000002,"preco12":44.132085360000005,"preco7":41.77129176,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FN15C","nome2":"Rodapé Color","unidQtdCx":"Metro/24 Metros"},{"modelo":"FZ7C","codigo":"R157FZ07-XXX","unidade":"Metro","qtdCaixa":"60 Metros","medidas":"13x70x2000","preco18":21.306162240000003,"preco12":19.8454212,"preco7":18.783064080000003,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FZ7C","nome2":"Rodapé Color","unidQtdCx":"Metro/60 Metros"},{"modelo":"FZ10C","codigo":"R157FZ10-XXX","unidade":"Metro","qtdCaixa":"40 Metros","medidas":"13x100x2000","preco18":31.177230480000002,"preco12":29.03776128,"preco7":27.473735520000005,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FZ10C","nome2":"Rodapé Color","unidQtdCx":"Metro/40 Metros"},{"modelo":"FZ15C","codigo":"R157FZ15-XXX","unidade":"Metro","qtdCaixa":"24 Metros","medidas":"13x150x2000","preco18":47.36342160000002,"preco12":44.132085360000005,"preco7":41.77129176,"ean":null,"ipi":0.0,"descricao":"Rodapé Color FZ15C","nome2":"Rodapé Color","unidQtdCx":"Metro/24 Metros"},{"modelo":"MFN7C","codigo":null,"unidade":"Metro","qtdCaixa":"60 Metros","medidas":"10x70x2400","preco18":17.78465495664,"preco12":16.565600161440003,"preco7":15.685171698240001,"ean":null,"ipi":0.0,"descricao":"Rodapé Color MFN7C","nome2":"Rodapé Color","unidQtdCx":"Metro/60 Metros"},{"modelo":"MFN10C","codigo":null,"unidade":"Metro","qtdCaixa":"40 Metros","medidas":"10x100x2400","preco18":26.020047350880006,"preco12":24.259190424480007,"preco7":22.972410362880005,"ean":null,"ipi":0.0,"descricao":"Rodapé Color MFN10C","nome2":"Rodapé Color","unidQtdCx":"Metro/40 Metros"},{"modelo":"MFZ7C","codigo":null,"unidade":"Metro","qtdCaixa":"24 Metros","medidas":"10x70x2400","preco18":17.78465495664,"preco12":16.565600161440003,"preco7":15.685171698240001,"ean":null,"ipi":0.0,"descricao":"Rodapé Color MFZ7C","nome2":"Rodapé Color","unidQtdCx":"Metro/24 Metros"},{"modelo":"MFZ10C","codigo":null,"unidade":"Metro","qtdCaixa":"60 Metros","medidas":"10x100x2400","preco18":26.020047350880006,"preco12":24.259190424480007,"preco7":22.972410362880005,"ean":null,"ipi":0.0,"descricao":"Rodapé Color MFZ10C","nome2":"Rodapé Color","unidQtdCx":"Metro/60 Metros"},{"modelo":"WB5CM","codigo":"R150WB05-XXX","unidade":"Metro","qtdCaixa":"97.60 Metros","medidas":"13x50x2440","preco18":20.740527185392654,"preco12":19.336634540659823,"preco7":18.277092921993535,"ean":null,"ipi":0.0,"descricao":"Rodapé Color WB5CM","nome2":"Rodapé Color","unidQtdCx":"Metro/97.60 Metros"},{"modelo":"WB7CM","codigo":"R150WB07-XXX","unidade":"Metro","qtdCaixa":"51.24 Metros","medidas":"18x70x2440","preco18":29.05792889192304,"preco12":27.071288356923752,"preco7":25.614418631257603,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde WB7CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/51.24 Metros"},{"modelo":"WB11CM","codigo":"R150WB11-XXX","unidade":"Metro","qtdCaixa":"36.60 Metros","medidas":"18x110x2440","preco18":42.55889716286494,"preco12":39.64612093118596,"preco7":37.51547905801339,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde WB11CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/36.60 Metros"},{"modelo":"WB15CM","codigo":"R150WB15-XXX","unidade":"Metro","qtdCaixa":"24.40 Metros","medidas":"18x150x2440","preco18":66.32730532850987,"preco12":61.79776490871146,"preco7":58.48669735037929,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde WB15CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/24.40 Metros"},{"modelo":"WB20CM","codigo":"R150WB20-XXX","unidade":"Metro","qtdCaixa":"17.08 Metros","medidas":"18x200x2440","preco18":106.37797851409567,"preco12":99.12011842623158,"preco7":93.79592179243346,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde WB20CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/17.08 Metros"},{"modelo":"FB7CM","codigo":"R150FB07-XXX","unidade":"Metro","qtdCaixa":"53.68 Metros","medidas":"18x70x2440","preco18":29.05792889192304,"preco12":27.071288356923752,"preco7":25.614418631257603,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FB7CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/53.68 Metros"},{"modelo":"FB11CM","codigo":"R150FB11-XXX","unidade":"Metro","qtdCaixa":"36.60 Metros","medidas":"18x110x2440","preco18":42.55889716286494,"preco12":39.64612093118596,"preco7":37.51547905801339,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FB11CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/36.60 Metros"},{"modelo":"FB15CM","codigo":"R150FB15-XXX","unidade":"Metro","qtdCaixa":"24.40 Metros","medidas":"18x150x2440","preco18":66.32730532850987,"preco12":61.79776490871146,"preco7":58.48669735037929,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FB15CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/24.40 Metros"},{"modelo":"FB20CM","codigo":"R150FB20-XXX","unidade":"Metro","qtdCaixa":"17.08 Metros","medidas":"18x200x2440","preco18":106.37797851409567,"preco12":99.12011842623158,"preco7":93.79592179243346,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FB20CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/17.08 Metros"},{"modelo":"FD1CM","codigo":"R150FD01-XXX","unidade":"Metro","qtdCaixa":"43.92 Metros","medidas":"15x100x2440","preco18":41.798916856385205,"preco12":38.93815448598622,"preco7":36.8455597891203,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FD1CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/43.92 Metros"},{"modelo":"FL1CM","codigo":"R150FL01-XXX","unidade":"Metro","qtdCaixa":"68.32 Metros","medidas":"12x80x2440","preco18":33.87884325685467,"preco12":31.574340236255498,"preco7":29.879073646389422,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FL1CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/68.32 Metros"},{"modelo":"FL2CM","codigo":"R150FL02-XXX","unidade":"Metro","qtdCaixa":"34.16 Metros","medidas":"15x120x2440","preco18":45.66624376451717,"preco12":42.5405959894516,"preco7":40.26258150931908,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FL2CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/34.16 Metros"},{"modelo":"FL3CM","codigo":"R150FL03-XXX","unidade":"Metro","qtdCaixa":"126.88 Metros","medidas":"17x55x2440","preco18":20.740527185392654,"preco12":19.336634540659823,"preco7":18.277092921993535,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FL3CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/126.88 Metros"},{"modelo":"DB6CM","codigo":"R150DB06-XXX","unidade":"Metro","qtdCaixa":"126.88 Metros","medidas":"17x55x2440","preco18":20.740527185392654,"preco12":19.336634540659823,"preco7":18.277092921993535,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde DB6CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/126.88 Metros"},{"modelo":"DB7CM","codigo":"R150DB07-XXX","unidade":"Metro","qtdCaixa":"58,56 Metros","medidas":"18x70x2440","preco18":29.05792889192304,"preco12":27.071288356923752,"preco7":25.614418631257603,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde DB7CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/58,56 Metros"},{"modelo":"DB11CM","codigo":"R150DB11-XXX","unidade":"Metro","qtdCaixa":"36,60 Metros","medidas":"18x110x2440","preco18":42.55889716286494,"preco12":39.64612093118596,"preco7":37.51547905801339,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde DB11CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/36,60 Metros"},{"modelo":"RS1CM","codigo":"R150RS01-XXX","unidade":"Metro","qtdCaixa":"53,68 Metros","medidas":"18x110x2440","preco18":50.262005535482196,"preco12":46.828127471350086,"preco7":44.30810405331765,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde RS1CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/53,68 Metros"},{"modelo":"RS2CM","codigo":"R150RS02-XXX","unidade":"Metro","qtdCaixa":"53,68 Metros","medidas":"18x110x2440","preco18":50.262005535482196,"preco12":46.828127471350086,"preco7":44.30810405331765,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde RS2CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/53,68 Metros"},{"modelo":"FN3CM","codigo":"R167FN03-XXX","unidade":"Metro","qtdCaixa":"124 Metros ","medidas":"13x30x2000","preco18":20.21582665054965,"preco12":18.847450133973506,"preco7":17.81471314033113,"ean":null,"ipi":0.0,"descricao":"Rodapé Color < Qtde FN3CM","nome2":"Rodapé Color < Qtde","unidQtdCx":"Metro/124 Metros "},{"modelo":"FN7CM","codigo":"R157FN07-XXX","unidade":"Metro","qtdCaixa":"60 Metros","medidas":"13x70x2000","preco18":23.649840086400005,"preco12":22.028417532000002,"preco7":20.849201128800004,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FN7CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/60 Metros"},{"modelo":"FN10CM","codigo":"R157FN10-XXX","unidade":"Metro","qtdCaixa":"40 Metros","medidas":"13x100x2000","preco18":34.6067258328,"preco12":32.2319150208,"preco7":30.495846427200007,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FN10CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/40 Metros"},{"modelo":"FN15CM","codigo":"R157FN15-XXX","unidade":"Metro","qtdCaixa":"24 Metros","medidas":"13x150x2000","preco18":52.573397976000024,"preco12":48.98661474960001,"preco7":46.3661338536,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FN15CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/24 Metros"},{"modelo":"FZ7CM","codigo":"R157FZ07-XXX","unidade":"Metro","qtdCaixa":"60 Metros","medidas":"13x70x2000","preco18":23.649840086400005,"preco12":22.028417532000002,"preco7":20.849201128800004,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FZ7CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/60 Metros"},{"modelo":"FZ10CM","codigo":"R157FZ10-XXX","unidade":"Metro","qtdCaixa":"40 Metros","medidas":"13x100x2000","preco18":34.6067258328,"preco12":32.2319150208,"preco7":30.495846427200007,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FZ10CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/40 Metros"},{"modelo":"FZ15CM","codigo":"R157FZ15-XXX","unidade":"Metro","qtdCaixa":"24 Metros","medidas":"13x150x2000","preco18":52.573397976000024,"preco12":48.98661474960001,"preco7":46.3661338536,"ean":null,"ipi":0.0,"descricao":"Rodapé Color Compac FZ15CM","nome2":"Rodapé Color Compac","unidQtdCx":"Metro/24 Metros"},{"modelo":"MFN7CM","codigo":null,"unidade":"Metro","qtdCaixa":"60 Metros","medidas":"10x70x2400","preco18":19.740967001870402,"preco12":18.387816179198403,"preco7":17.4105405850464,"ean":null,"ipi":0.0,"descricao":"Rodape Color Sup Compac MFN7CM","nome2":"Rodape Color Sup Compac","unidQtdCx":"Metro/60 Metros"},{"modelo":"MFN10CM","codigo":null,"unidade":"Metro","qtdCaixa":"40 Metros","medidas":"10x100x2400","preco18":28.882252559476807,"preco12":26.92770137117281,"preco7":25.49937550279681,"ean":null,"ipi":0.0,"descricao":"Rodape Color Sup Compac MFN10CM","nome2":"Rodape Color Sup Compac","unidQtdCx":"Metro/40 Metros"},{"modelo":"MFZ7CM","codigo":null,"unidade":"Metro","qtdCaixa":"24 Metros","medidas":"10x70x2400","preco18":19.740967001870402,"preco12":18.387816179198403,"preco7":17.4105405850464,"ean":null,"ipi":0.0,"descricao":"Rodape Color Sup Compac MFZ7CM","nome2":"Rodape Color Sup Compac","unidQtdCx":"Metro/24 Metros"},{"modelo":"MFZ10CM","codigo":null,"unidade":"Metro","qtdCaixa":"60 Metros","medidas":"10x100x2400","preco18":28.882252559476807,"preco12":26.92770137117281,"preco7":25.49937550279681,"ean":null,"ipi":0.0,"descricao":"Rodape Color Sup Compac MFZ10CM","nome2":"Rodape Color Sup Compac","unidQtdCx":"Metro/60 Metros"},{"modelo":"FB11 LED","codigo":"R150FB11-300","unidade":"Metro","qtdCaixa":"36,60 Metros","medidas":"18x110x2440","preco18":43.87296091078658,"preco12":41.8488145521869,"preco7":40.35127537631234,"ean":null,"ipi":0.0,"descricao":"Rodapé LED FB11 LED","nome2":"Rodapé LED","unidQtdCx":"Metro/36,60 Metros"},{"modelo":"WB11 LED","codigo":"R150WB11-300","unidade":"Metro","qtdCaixa":"36,60 Metros","medidas":"18x110x2440","preco18":43.87296091078658,"preco12":41.8488145521869,"preco7":40.35127537631234,"ean":null,"ipi":0.0,"descricao":"Rodapé LED WB11 LED","nome2":"Rodapé LED","unidQtdCx":"Metro/36,60 Metros"},{"modelo":"FB15 LED","codigo":"R150FB15-300","unidade":"Metro","qtdCaixa":"24,40 Metros","medidas":"18x150x2440","preco18":60.25420577341443,"preco12":56.11657790914562,"preco7":53.11033266401282,"ean":null,"ipi":0.0,"descricao":"Rodapé LED FB15 LED","nome2":"Rodapé LED","unidQtdCx":"Metro/24,40 Metros"},{"modelo":"WB15 LED","codigo":"R150WB15-300","unidade":"Metro","qtdCaixa":"24,40 Metros","medidas":"18x150x2440","preco18":60.25420577341443,"preco12":56.11657790914562,"preco7":53.11033266401282,"ean":null,"ipi":0.0,"descricao":"Rodapé LED WB15 LED","nome2":"Rodapé LED","unidQtdCx":"Metro/24,40 Metros"},{"modelo":"IL3","codigo":"R250IL03-300","unidade":"Metro","qtdCaixa":"60 metros","medidas":"33x50x2000mm","preco18":39.49,"preco12":34,"preco7":34,"ean":null,"ipi":0.0325,"descricao":"Perfil LED IL3","nome2":"Perfil LED","unidQtdCx":"Metro/60 metros"},{"modelo":"IL4","codigo":"R250IL04-300","unidade":"Metro","qtdCaixa":"48 metros","medidas":"36x60x2000mm","preco18":46.54,"preco12":40.08,"preco7":40.08,"ean":null,"ipi":0.0325,"descricao":"Perfil LED IL4","nome2":"Perfil LED","unidQtdCx":"Metro/48 metros"},{"modelo":"IL10","codigo":"R250IL10-300","unidade":"Metro","qtdCaixa":"28 metros","medidas":"23x80x2000mm","preco18":87.48,"preco12":78.13,"preco7":78.13,"ean":null,"ipi":0.0325,"descricao":"Perfil LED IL10","nome2":"Perfil LED","unidQtdCx":"Metro/28 metros"},{"modelo":"IL11","codigo":"R250IL11-300","unidade":"Metro","qtdCaixa":"26 metros ","medidas":"20x80x2000mm","preco18":87.48,"preco12":78.13,"preco7":78.13,"ean":null,"ipi":0.0325,"descricao":"Perfil LED IL11","nome2":"Perfil LED","unidQtdCx":"Metro/26 metros "},{"modelo":"IL12","codigo":"R250IL12-300","unidade":"Metro","qtdCaixa":"60 metros","medidas":"25x20x2000mm","preco18":52.49,"preco12":46.88,"preco7":46.88,"ean":null,"ipi":0.0325,"descricao":"Perfil LED IL12","nome2":"Perfil LED","unidQtdCx":"Metro/60 metros"},{"modelo":"IL10 BLACK","codigo":"R250IL10-003","unidade":"Metro","qtdCaixa":"28 metros","medidas":"23x80x2000mm","preco18":104.98,"preco12":93.76,"preco7":93.76,"ean":null,"ipi":0.0325,"descricao":"Perfil LED BLACK IL10 BLACK","nome2":"Perfil LED BLACK","unidQtdCx":"Metro/28 metros"},{"modelo":"IL11 BLACK","codigo":"R250IL11-003","unidade":"Metro","qtdCaixa":"26 metros ","medidas":"20x80x2000mm","preco18":104.98,"preco12":93.76,"preco7":93.76,"ean":null,"ipi":0.0325,"descricao":"Perfil LED BLACK IL11 BLACK","nome2":"Perfil LED BLACK","unidQtdCx":"Metro/26 metros "},{"modelo":"IL12 BLACK","codigo":"R250IL12-003","unidade":"Metro","qtdCaixa":"60 metros","medidas":"25x20x2000mm","preco18":62.99,"preco12":56.26,"preco7":56.26,"ean":null,"ipi":0.0325,"descricao":"Perfil LED BLACK IL12 BLACK","nome2":"Perfil LED BLACK","unidQtdCx":"Metro/60 metros"},{"modelo":"CANELE L - 2,8","codigo":"P16000CL","unidade":"PEÇA","qtdCaixa":"6 peças (2,02M²)","medidas":"14x120x2800mm","preco18":99.57556800000003,"preco12":92.74046400000003,"preco7":87.74827200000001,"ean":null,"ipi":0.0325,"descricao":"CANELE L CANELE L - 2,8","nome2":"CANELE L","unidQtdCx":"PEÇA/6 peças (2,02M²)"},{"modelo":"CANELE S - 2,8","codigo":"P16000CS","unidade":"PEÇA","qtdCaixa":"6 peças (1,68 M²)","medidas":"14x105x2800mm","preco18":95.738112,"preco12":89.17128000000001,"preco7":84.37737600000001,"ean":null,"ipi":0.0325,"descricao":"CANELE S CANELE S - 2,8","nome2":"CANELE S","unidQtdCx":"PEÇA/6 peças (1,68 M²)"},{"modelo":"CANELE L - 2,0","codigo":"P16700CL","unidade":"PEÇA","qtdCaixa":"6 peças ( 2,88M² )","medidas":"14x120x2000mm","preco18":71.12540571428573,"preco12":66.24318857142859,"preco7":62.67733714285716,"ean":null,"ipi":0.0325,"descricao":"CANELE L CANELE L - 2,0","nome2":"CANELE L","unidQtdCx":"PEÇA/6 peças ( 2,88M² )"},{"modelo":"CANELE S - 2,0","codigo":"P16700CS","unidade":"PEÇA","qtdCaixa":"6 peças ( 2,52M² )","medidas":"14x105x2000mm","preco18":68.38436571428574,"preco12":63.693771428571445,"preco7":60.2695542857143,"ean":null,"ipi":0.0325,"descricao":"CANELE S CANELE S - 2,0","nome2":"CANELE S","unidQtdCx":"PEÇA/6 peças ( 2,52M² )"},{"modelo":"GM2","codigo":"P1670GM2","unidade":"PEÇA","qtdCaixa":"30 peças","medidas":"18x25x2000mm","preco18":46.710120960000005,"preco12":43.48525824000001,"preco7":41.16738816000001,"ean":null,"ipi":0.0325,"descricao":"Perfil Canele GM2","nome2":"Perfil Canele","unidQtdCx":"PEÇA/30 peças"}],"engenharia":[{"modelo":"WB5","codigo":"R150WB05","unidade":"Metro","qtdCaixaM":97.6,"medidas":"13x50x2440","precoPorM":16.66,"ipi":0.0,"precoPorCaixa":1626.0159999999998,"ean":null,"descricao":"Rodapé  R150WB05","nome2":"Rodapé ","unidQtdCx":"Metro/97,6"},{"modelo":"WB7","codigo":"R150WB07","unidade":"Metro","qtdCaixaM":51.24,"medidas":"18x70x2440","precoPorM":23.34,"ipi":0.0,"precoPorCaixa":1195.9416,"ean":null,"descricao":"Rodapé  R150WB07","nome2":"Rodapé ","unidQtdCx":"Metro/51,24"},{"modelo":"WB11","codigo":"R150WB11","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":34.19,"ipi":0.0,"precoPorCaixa":1251.354,"ean":null,"descricao":"Rodapé  R150WB11","nome2":"Rodapé ","unidQtdCx":"Metro/36,6"},{"modelo":"WB15","codigo":"R150WB15","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":53.28,"ipi":0.0,"precoPorCaixa":1300.032,"ean":null,"descricao":"Rodapé  R150WB15","nome2":"Rodapé ","unidQtdCx":"Metro/24,4"},{"modelo":"WB20","codigo":"R150WB20","unidade":"Metro","qtdCaixaM":17.08,"medidas":"14x200x2440","precoPorM":85.45,"ipi":0.0,"precoPorCaixa":1459.4859999999999,"ean":null,"descricao":"Rodapé  R150WB20","nome2":"Rodapé ","unidQtdCx":"Metro/17,08"},{"modelo":"FB7","codigo":"R150FB07","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x70x2440","precoPorM":23.4,"ipi":0.0,"precoPorCaixa":1256.1119999999999,"ean":null,"descricao":"Rodapé  R150FB07","nome2":"Rodapé ","unidQtdCx":"Metro/53,68"},{"modelo":"FB11","codigo":"R150FB11","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":34.19,"ipi":0.0,"precoPorCaixa":1251.354,"ean":null,"descricao":"Rodapé  R150FB11","nome2":"Rodapé ","unidQtdCx":"Metro/36,6"},{"modelo":"FB15","codigo":"R150FB15","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":53.28,"ipi":0.0,"precoPorCaixa":1300.032,"ean":null,"descricao":"Rodapé  R150FB15","nome2":"Rodapé ","unidQtdCx":"Metro/24,4"},{"modelo":"FB20","codigo":"R150FB20","unidade":"Metro","qtdCaixaM":17.08,"medidas":"14x200x2440","precoPorM":85.45,"ipi":0.0,"precoPorCaixa":1459.4859999999999,"ean":null,"descricao":"Rodapé  R150FB20","nome2":"Rodapé ","unidQtdCx":"Metro/17,08"},{"modelo":"FD1","codigo":"R150FD01","unidade":"Metro","qtdCaixaM":43.92,"medidas":"15x100x2440","precoPorM":33.49,"ipi":0.0,"precoPorCaixa":1470.8808000000001,"ean":null,"descricao":"Rodapé  R150FD01","nome2":"Rodapé ","unidQtdCx":"Metro/43,92"},{"modelo":"FL1","codigo":"R150FL01","unidade":"Metro","qtdCaixaM":61,"medidas":"12x80x2440","precoPorM":27.22,"ipi":0.0,"precoPorCaixa":1660.4199999999998,"ean":null,"descricao":"Rodapé  R150FL01","nome2":"Rodapé ","unidQtdCx":"Metro/61"},{"modelo":"FL2","codigo":"R150FL02","unidade":"Metro","qtdCaixaM":34.16,"medidas":"15x120x2440","precoPorM":36.68,"ipi":0.0,"precoPorCaixa":1252.9887999999999,"ean":null,"descricao":"Rodapé  R150FL02","nome2":"Rodapé ","unidQtdCx":"Metro/34,16"},{"modelo":"FL3","codigo":"R150FL03","unidade":"Metro","qtdCaixaM":73.2,"medidas":"17x55x2440","precoPorM":16.66,"ipi":0.0,"precoPorCaixa":1219.5120000000002,"ean":null,"descricao":"Rodapé  R150FL03","nome2":"Rodapé ","unidQtdCx":"Metro/73,2"},{"modelo":"DB6","codigo":"R150DB06","unidade":"Metro","qtdCaixaM":117.12,"medidas":"17x55x2440","precoPorM":16.66,"ipi":0.0,"precoPorCaixa":1951.2192,"ean":null,"descricao":"Rodapé  R150DB06","nome2":"Rodapé ","unidQtdCx":"Metro/117,12"},{"modelo":"DB7","codigo":"R150DB07","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x70x2440","precoPorM":23.34,"ipi":0.0,"precoPorCaixa":1252.8912,"ean":null,"descricao":"Rodapé  R150DB07","nome2":"Rodapé ","unidQtdCx":"Metro/53,68"},{"modelo":"DB11","codigo":"R150DB11","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":34.19,"ipi":0.0,"precoPorCaixa":1251.354,"ean":null,"descricao":"Rodapé  R150DB11","nome2":"Rodapé ","unidQtdCx":"Metro/36,6"},{"modelo":"RS1","codigo":"R150RS01","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x110x2440","precoPorM":40.38,"ipi":0.0,"precoPorCaixa":2167.5984000000003,"ean":null,"descricao":"Rodapé  R150RS01","nome2":"Rodapé ","unidQtdCx":"Metro/53,68"},{"modelo":"RS2","codigo":"R150RS02","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x110x2440","precoPorM":40.38,"ipi":0.0,"precoPorCaixa":2167.5984000000003,"ean":null,"descricao":"Rodapé  R150RS02","nome2":"Rodapé ","unidQtdCx":"Metro/53,68"},{"modelo":"FN3","codigo":"R157FN03","unidade":"Metro","qtdCaixaM":124,"medidas":"13x30x2000","precoPorM":13.33,"ipi":0.0,"precoPorCaixa":1652.92,"ean":null,"descricao":"Rodapé  R157FN03","nome2":"Rodapé ","unidQtdCx":"Metro/124"},{"modelo":"FN7","codigo":"R157FN07","unidade":"Metro","qtdCaixaM":64,"medidas":"13x70x2000","precoPorM":19.02,"ipi":0.0,"precoPorCaixa":1217.28,"ean":null,"descricao":"Rodapé  R157FN07","nome2":"Rodapé ","unidQtdCx":"Metro/64"},{"modelo":"FN10","codigo":"R157FN10","unidade":"Metro","qtdCaixaM":40,"medidas":"13x100x2000","precoPorM":27.83,"ipi":0.0,"precoPorCaixa":1113.1999999999998,"ean":null,"descricao":"Rodapé  R157FN10","nome2":"Rodapé ","unidQtdCx":"Metro/40"},{"modelo":"FN15","codigo":"R157FN15","unidade":"Metro","qtdCaixaM":28,"medidas":"13x150x2000","precoPorM":42.27,"ipi":0.0,"precoPorCaixa":1183.5600000000002,"ean":null,"descricao":"Rodapé  R157FN15","nome2":"Rodapé ","unidQtdCx":"Metro/28"},{"modelo":"FZ7","codigo":"R157FZ07","unidade":"Metro","qtdCaixaM":64,"medidas":"13x70x2000","precoPorM":19.02,"ipi":0.0,"precoPorCaixa":1217.28,"ean":null,"descricao":"Rodapé  R157FZ07","nome2":"Rodapé ","unidQtdCx":"Metro/64"},{"modelo":"FZ10","codigo":"R157FZ10","unidade":"Metro","qtdCaixaM":40,"medidas":"13x100x2000","precoPorM":27.83,"ipi":0.0,"precoPorCaixa":1113.1999999999998,"ean":null,"descricao":"Rodapé  R157FZ10","nome2":"Rodapé ","unidQtdCx":"Metro/40"},{"modelo":"FZ15","codigo":"R157FZ15","unidade":"Metro","qtdCaixaM":28,"medidas":"13x150x2000","precoPorM":42.27,"ipi":0.0,"precoPorCaixa":1183.5600000000002,"ean":null,"descricao":"Rodapé  R157FZ15","nome2":"Rodapé ","unidQtdCx":"Metro/28"},{"modelo":"FZ20","codigo":"R157FZ20","unidade":"Metro","qtdCaixaM":16,"medidas":"14x200x2000","precoPorM":68.69,"ipi":0.0,"precoPorCaixa":1099.04,"ean":null,"descricao":"Rodapé  R157FZ20","nome2":"Rodapé ","unidQtdCx":"Metro/16"},{"modelo":"MFN7","codigo":null,"unidade":"Metro","qtdCaixaM":69.6,"medidas":"10x70x2400","precoPorM":16.17,"ipi":0.0,"precoPorCaixa":1125.432,"ean":null,"descricao":"Rodapé  ","nome2":"Rodapé ","unidQtdCx":"Metro/69,6"},{"modelo":"MFN10","codigo":"-","unidade":"Metro","qtdCaixaM":52.8,"medidas":"10x100x2400","precoPorM":23.66,"ipi":0.0,"precoPorCaixa":1249.248,"ean":null,"descricao":"Rodapé  -","nome2":"Rodapé ","unidQtdCx":"Metro/52,8"},{"modelo":"MFZ7","codigo":"-","unidade":"Metro","qtdCaixaM":69.6,"medidas":"10x70x2400","precoPorM":16.17,"ipi":0.0,"precoPorCaixa":1125.432,"ean":null,"descricao":"Rodapé  -","nome2":"Rodapé ","unidQtdCx":"Metro/69,6"},{"modelo":"MFZ10","codigo":"-","unidade":"Metro","qtdCaixaM":52.8,"medidas":"10x100x2400","precoPorM":23.655499999999996,"ipi":0.0,"precoPorCaixa":1249.0103999999997,"ean":null,"descricao":"Rodapé  -","nome2":"Rodapé ","unidQtdCx":"Metro/52,8"},{"modelo":"WBN5","codigo":"R153WBN05","unidade":"Metro","qtdCaixaM":null,"medidas":"09X50X2400","precoPorM":14.161,"ipi":0.0,"precoPorCaixa":null,"ean":null,"descricao":null,"nome2":null,"unidQtdCx":null},{"modelo":"WB4G","codigo":"G150WB04","unidade":"Metro","qtdCaixaM":36,"medidas":"13X50X2440","precoPorM":40.65,"ipi":0.0,"precoPorCaixa":1463.3999999999999,"ean":null,"descricao":"Rodapé  G150WB04","nome2":"Rodapé ","unidQtdCx":"Metro/36"},{"modelo":"FB7G","codigo":"G150FB07","unidade":"Metro","qtdCaixaM":17,"medidas":"18x70x2440","precoPorM":56.96,"ipi":0.0,"precoPorCaixa":968.32,"ean":null,"descricao":"Rodapé  G150FB07","nome2":"Rodapé ","unidQtdCx":"Metro/17"},{"modelo":"FB11G","codigo":"G150FB11","unidade":"Metro","qtdCaixaM":12,"medidas":"18x110x2440","precoPorM":83.42,"ipi":0.0,"precoPorCaixa":1001.04,"ean":null,"descricao":"Rodapé  G150FB11","nome2":"Rodapé ","unidQtdCx":"Metro/12"},{"modelo":"WB7G","codigo":"G150WB07","unidade":"Metro","qtdCaixaM":17,"medidas":"18x70x2440","precoPorM":56.96,"ipi":0.0,"precoPorCaixa":968.32,"ean":null,"descricao":"Rodapé  G150WB07","nome2":"Rodapé ","unidQtdCx":"Metro/17"},{"modelo":"WB11","codigo":"G150WB11","unidade":"Metro","qtdCaixaM":12,"medidas":"18x110x2440","precoPorM":83.42,"ipi":0.0,"precoPorCaixa":1001.04,"ean":null,"descricao":"Rodapé  G150WB11","nome2":"Rodapé ","unidQtdCx":"Metro/12"},{"modelo":"F","codigo":"M550000F","unidade":"Metro","qtdCaixaM":160,"medidas":"30x35x2000mm","precoPorM":3.85,"ipi":0.0325,"precoPorCaixa":616,"ean":7897826109481,"descricao":"Rodateto M550000F","nome2":"Rodateto","unidQtdCx":"Metro/160"},{"modelo":"D","codigo":"M550000D","unidade":"Metro","qtdCaixaM":90,"medidas":"40x500x2000mm","precoPorM":4.37,"ipi":0.0325,"precoPorCaixa":393.3,"ean":7897826109474,"descricao":"Rodateto M550000D","nome2":"Rodateto","unidQtdCx":"Metro/90"},{"modelo":"C","codigo":"M550000C","unidade":"Metro","qtdCaixaM":40,"medidas":"65x80x2000mm","precoPorM":13.09,"ipi":0.0325,"precoPorCaixa":523.6,"ean":7897826109443,"descricao":"Rodateto M550000C","nome2":"Rodateto","unidQtdCx":"Metro/40"},{"modelo":"J","codigo":"M550000J","unidade":"Metro","qtdCaixaM":80,"medidas":"50x45x2000mm","precoPorM":7.44,"ipi":0.0325,"precoPorCaixa":595.2,"ean":7897826109511,"descricao":"Rodateto M550000J","nome2":"Rodateto","unidQtdCx":"Metro/80"},{"modelo":"A2","codigo":"M55000A2","unidade":"Metro","qtdCaixaM":90,"medidas":"50x50x2000mm","precoPorM":5.85,"ipi":0.0325,"precoPorCaixa":526.5,"ean":7897826109405,"descricao":"Rodateto M55000A2","nome2":"Rodateto","unidQtdCx":"Metro/90"},{"modelo":"A3","codigo":"M55000A3","unidade":"Metro","qtdCaixaM":160,"medidas":"30x30x2000mm","precoPorM":2.85,"ipi":0.0325,"precoPorCaixa":456,"ean":7897826109436,"descricao":"Rodateto M55000A3","nome2":"Rodateto","unidQtdCx":"Metro/160"},{"modelo":"M2","codigo":"M55000M2","unidade":"Metro","qtdCaixaM":100,"medidas":"20x60x2000mm","precoPorM":5.48,"ipi":0.0325,"precoPorCaixa":548,"ean":7897826109559,"descricao":"Rodateto M55000M2","nome2":"Rodateto","unidQtdCx":"Metro/100"},{"modelo":"K1","codigo":"M55000K1","unidade":"Metro","qtdCaixaM":240,"medidas":"20x30x2000mm","precoPorM":2.69,"ipi":0.0325,"precoPorCaixa":645.6,"ean":7897826109528,"descricao":"Rodateto M55000K1","nome2":"Rodateto","unidQtdCx":"Metro/240"},{"modelo":"A","codigo":"M250000A","unidade":"Metro","qtdCaixaM":60,"medidas":"110x110x2000mm","precoPorM":34.02,"ipi":0.0325,"precoPorCaixa":2041.2000000000003,"ean":null,"descricao":"Rodateto M250000A","nome2":"Rodateto","unidQtdCx":"Metro/60"},{"modelo":"A1","codigo":"M25000A1","unidade":"Metro","qtdCaixaM":110,"medidas":"80x80x2000mm","precoPorM":24.19,"ipi":0.0325,"precoPorCaixa":2660.9,"ean":null,"descricao":"Rodateto M25000A1","nome2":"Rodateto","unidQtdCx":"Metro/110"},{"modelo":"AT","codigo":"M25000AT","unidade":"Metro","qtdCaixaM":84,"medidas":"95x1002000mm","precoPorM":29.85,"ipi":0.0325,"precoPorCaixa":2507.4,"ean":null,"descricao":"Rodateto M25000AT","nome2":"Rodateto","unidQtdCx":"Metro/84"},{"modelo":"B1","codigo":"M25000B1","unidade":"Metro","qtdCaixaM":150,"medidas":"80x652000mm","precoPorM":23.68,"ipi":0.0325,"precoPorCaixa":3552,"ean":null,"descricao":"Rodateto M25000B1","nome2":"Rodateto","unidQtdCx":"Metro/150"},{"modelo":"B2","codigo":"M25000B2","unidade":"Metro","qtdCaixaM":190,"medidas":"35x352000mm","precoPorM":8.26,"ipi":0.0325,"precoPorCaixa":1569.3999999999999,"ean":null,"descricao":"Rodateto M25000B2","nome2":"Rodateto","unidQtdCx":"Metro/190"},{"modelo":"B5","codigo":"M25000B5","unidade":"Metro","qtdCaixaM":96,"medidas":"50x502000mm","precoPorM":11.83,"ipi":0.0325,"precoPorCaixa":1135.68,"ean":null,"descricao":"Rodateto M25000B5","nome2":"Rodateto","unidQtdCx":"Metro/96"},{"modelo":"B8","codigo":"M25000B8","unidade":"Metro","qtdCaixaM":130,"medidas":"82x822000mm","precoPorM":32.57,"ipi":0.0325,"precoPorCaixa":4234.1,"ean":null,"descricao":"Rodateto M25000B8","nome2":"Rodateto","unidQtdCx":"Metro/130"},{"modelo":"E","codigo":"M250000E","unidade":"Metro","qtdCaixaM":352,"medidas":"20x252000mm","precoPorM":4.11,"ipi":0.0325,"precoPorCaixa":1446.72,"ean":null,"descricao":"Rodateto M250000E","nome2":"Rodateto","unidQtdCx":"Metro/352"},{"modelo":"GT","codigo":"M25000GT","unidade":"Metro","qtdCaixaM":92,"medidas":"50x1202000mm","precoPorM":35.28,"ipi":0.0325,"precoPorCaixa":3245.76,"ean":null,"descricao":"Rodateto M25000GT","nome2":"Rodateto","unidQtdCx":"Metro/92"},{"modelo":"GR","codigo":"M25000GR","unidade":"Metro","qtdCaixaM":108,"medidas":"80x852000mm","precoPorM":32.66,"ipi":0.0325,"precoPorCaixa":3527.2799999999997,"ean":null,"descricao":"Rodateto M25000GR","nome2":"Rodateto","unidQtdCx":"Metro/108"},{"modelo":"GO","codigo":"M25000GO","unidade":"Metro","qtdCaixaM":110,"medidas":"80x802000mm","precoPorM":32.57,"ipi":0.0325,"precoPorCaixa":3582.7,"ean":null,"descricao":"Rodateto M25000GO","nome2":"Rodateto","unidQtdCx":"Metro/110"},{"modelo":"GP","codigo":"M25000GP","unidade":"Metro","qtdCaixaM":96,"medidas":"100x1002000mm","precoPorM":36.02,"ipi":0.0325,"precoPorCaixa":3457.92,"ean":null,"descricao":"Rodateto M25000GP","nome2":"Rodateto","unidQtdCx":"Metro/96"},{"modelo":"H","codigo":"M250000H","unidade":"Metro","qtdCaixaM":100,"medidas":"50x402000mm","precoPorM":11.29,"ipi":0.0325,"precoPorCaixa":1129,"ean":null,"descricao":"Rodateto M250000H","nome2":"Rodateto","unidQtdCx":"Metro/100"},{"modelo":"I","codigo":"M250000I","unidade":"Metro","qtdCaixaM":204,"medidas":"15x402000mm","precoPorM":10.79,"ipi":0.0325,"precoPorCaixa":2201.16,"ean":null,"descricao":"Rodateto M250000I","nome2":"Rodateto","unidQtdCx":"Metro/204"},{"modelo":"K","codigo":"M250000K","unidade":"Metro","qtdCaixaM":160,"medidas":"70x702000mm","precoPorM":26.8,"ipi":0.0325,"precoPorCaixa":4288,"ean":null,"descricao":"Rodateto M250000K","nome2":"Rodateto","unidQtdCx":"Metro/160"},{"modelo":"M1","codigo":"M25000M1","unidade":"Metro","qtdCaixaM":84,"medidas":"30x1202000mm","precoPorM":35.72,"ipi":0.0325,"precoPorCaixa":3000.48,"ean":null,"descricao":"Rodateto M25000M1","nome2":"Rodateto","unidQtdCx":"Metro/84"},{"modelo":"N","codigo":"M250000N","unidade":"Metro","qtdCaixaM":90,"medidas":"20x702000mm","precoPorM":14.92,"ipi":0.0325,"precoPorCaixa":1342.8,"ean":null,"descricao":"Rodateto M250000N","nome2":"Rodateto","unidQtdCx":"Metro/90"},{"modelo":"NE1","codigo":"M2500NE1","unidade":"Metro","qtdCaixaM":220,"medidas":"40x402000mm","precoPorM":11.15,"ipi":0.0325,"precoPorCaixa":2453,"ean":null,"descricao":"Rodateto M2500NE1","nome2":"Rodateto","unidQtdCx":"Metro/220"},{"modelo":"NE2","codigo":"M2500NE2","unidade":"Metro","qtdCaixaM":120,"medidas":"60x602000mm","precoPorM":23.11,"ipi":0.0325,"precoPorCaixa":2773.2,"ean":null,"descricao":"Rodateto M2500NE2","nome2":"Rodateto","unidQtdCx":"Metro/120"},{"modelo":"NE3","codigo":"M2500NE3","unidade":"Metro","qtdCaixaM":70,"medidas":"82x822000mm","precoPorM":29.47,"ipi":0.0325,"precoPorCaixa":2062.9,"ean":null,"descricao":"Rodateto M2500NE3","nome2":"Rodateto","unidQtdCx":"Metro/70"},{"modelo":"NE4","codigo":"M2500NE4","unidade":"Metro","qtdCaixaM":110,"medidas":"100x1002000mm","precoPorM":31.87,"ipi":0.0325,"precoPorCaixa":3505.7000000000003,"ean":null,"descricao":"Rodateto M2500NE4","nome2":"Rodateto","unidQtdCx":"Metro/110"},{"modelo":"O","codigo":"M250000O","unidade":"Metro","qtdCaixaM":130,"medidas":"20x402000mm","precoPorM":10.79,"ipi":0.0325,"precoPorCaixa":1402.6999999999998,"ean":null,"descricao":"Rodateto M250000O","nome2":"Rodateto","unidQtdCx":"Metro/130"},{"modelo":"QR","codigo":"M25000QR","unidade":"Metro","qtdCaixaM":240,"medidas":"20x202000mm","precoPorM":6.17,"ipi":0.0325,"precoPorCaixa":1480.8,"ean":null,"descricao":"Rodateto M25000QR","nome2":"Rodateto","unidQtdCx":"Metro/240"},{"modelo":"SM","codigo":"M25000SM","unidade":"Metro","qtdCaixaM":84,"medidas":"95x1052000mm","precoPorM":29.85,"ipi":0.0325,"precoPorCaixa":2507.4,"ean":null,"descricao":"Rodateto M25000SM","nome2":"Rodateto","unidQtdCx":"Metro/84"},{"modelo":"ST2","codigo":"M2500ST2","unidade":"Metro","qtdCaixaM":136,"medidas":"50x502000mm","precoPorM":14.92,"ipi":0.0325,"precoPorCaixa":2029.12,"ean":null,"descricao":"Rodateto M2500ST2","nome2":"Rodateto","unidQtdCx":"Metro/136"},{"modelo":"ST3","codigo":"M2500ST3","unidade":"Metro","qtdCaixaM":84,"medidas":"75x752000mm","precoPorM":29.85,"ipi":0.0325,"precoPorCaixa":2507.4,"ean":null,"descricao":"Rodateto M2500ST3","nome2":"Rodateto","unidQtdCx":"Metro/84"},{"modelo":"ST4","codigo":"M2500ST4","unidade":"Metro","qtdCaixaM":40,"medidas":"130x1302000mm","precoPorM":52.84,"ipi":0.0325,"precoPorCaixa":2113.6000000000004,"ean":null,"descricao":"Rodateto M2500ST4","nome2":"Rodateto","unidQtdCx":"Metro/40"},{"modelo":"TI","codigo":"M25000TI","unidade":"Metro","qtdCaixaM":52,"medidas":"140x1402000mm","precoPorM":47.93,"ipi":0.0325,"precoPorCaixa":2492.36,"ean":null,"descricao":"Rodateto M25000TI","nome2":"Rodateto","unidQtdCx":"Metro/52"},{"modelo":"TL","codigo":"M25000TL","unidade":"Metro","qtdCaixaM":36,"medidas":"145x1552000mm","precoPorM":52.57,"ipi":0.0325,"precoPorCaixa":1892.52,"ean":null,"descricao":"Rodateto M25000TL","nome2":"Rodateto","unidQtdCx":"Metro/36"},{"modelo":"T4","codigo":"M25000T4","unidade":"Metro","qtdCaixaM":170,"medidas":"20x302000mm","precoPorM":8.34,"ipi":0.0325,"precoPorCaixa":1417.8,"ean":null,"descricao":"Rodateto M25000T4","nome2":"Rodateto","unidQtdCx":"Metro/170"},{"modelo":"S3","codigo":"M15000S3","unidade":"Metro","qtdCaixaM":200,"medidas":"20x30x2000mm","precoPorM":19.36,"ipi":0.0,"precoPorCaixa":3872,"ean":null,"descricao":"Boiserie M15000S3","nome2":"Boiserie","unidQtdCx":"Metro/200"},{"modelo":"S4","codigo":"M15000S4","unidade":"Metro","qtdCaixaM":180,"medidas":"20x40x2000mm","precoPorM":20.8,"ipi":0.0,"precoPorCaixa":3744,"ean":null,"descricao":"Boiserie M15000S4","nome2":"Boiserie","unidQtdCx":"Metro/180"},{"modelo":"S8","codigo":"M15000S8","unidade":"Metro","qtdCaixaM":70,"medidas":"20x80x2000mm","precoPorM":38.69,"ipi":0.0,"precoPorCaixa":2708.2999999999997,"ean":null,"descricao":"Boiserie M15000S8","nome2":"Boiserie","unidQtdCx":"Metro/70"},{"modelo":"SP2N","codigo":"M1500SP2","unidade":"Metro","qtdCaixaM":500,"medidas":"10x21x2000mm","precoPorM":10.81,"ipi":0.0,"precoPorCaixa":5405,"ean":null,"descricao":"Boiserie M1500SP2","nome2":"Boiserie","unidQtdCx":"Metro/500"},{"modelo":"SP3N","codigo":"M1500SP3","unidade":"Metro","qtdCaixaM":350,"medidas":"13x23x2000mm","precoPorM":13.26,"ipi":0.0,"precoPorCaixa":4641,"ean":null,"descricao":"Boiserie M1500SP3","nome2":"Boiserie","unidQtdCx":"Metro/350"},{"modelo":"S2","codigo":"M15000S2","unidade":"Metro","qtdCaixaM":400,"medidas":"10x25x2000mm","precoPorM":12.6,"ipi":0.0,"precoPorCaixa":5040,"ean":null,"descricao":"Boiserie M15000S2","nome2":"Boiserie","unidQtdCx":"Metro/400"},{"modelo":"Z101","codigo":"Q170Z101","unidade":"kit com 4 cantos","qtdCaixaM":10,"medidas":"200x200 - S4","precoPorM":83.42,"ipi":0.0,"precoPorCaixa":834.2,"ean":null,"descricao":"Aplique Q170Z101","nome2":"Aplique","unidQtdCx":"kit com 4 cantos/10"},{"modelo":"Z102","codigo":"Q170Z102","unidade":"kit com 4 cantos","qtdCaixaM":10,"medidas":"200x200 - S4","precoPorM":83.42,"ipi":0.0,"precoPorCaixa":834.2,"ean":null,"descricao":"Aplique Q170Z102","nome2":"Aplique","unidQtdCx":"kit com 4 cantos/10"},{"modelo":"RR30","codigo":"T160RR30","unidade":"1 peça","qtdCaixaM":7,"medidas":"300 MM","precoPorM":33.43,"ipi":0.0,"precoPorCaixa":234.01,"ean":null,"descricao":"Roseta T160RR30","nome2":"Roseta","unidQtdCx":"1 peça/7"},{"modelo":"RL30","codigo":"T160RL30","unidade":"1 peça","qtdCaixaM":6,"medidas":"300 MM","precoPorM":34.82,"ipi":0.0,"precoPorCaixa":208.92000000000002,"ean":null,"descricao":"Roseta T160RL30","nome2":"Roseta","unidQtdCx":"1 peça/6"},{"modelo":"RF30","codigo":"T160RF30","unidade":"1 peça","qtdCaixaM":7,"medidas":"300 MM","precoPorM":34.82,"ipi":0.0,"precoPorCaixa":243.74,"ean":null,"descricao":"Roseta T160RF30","nome2":"Roseta","unidQtdCx":"1 peça/7"},{"modelo":"R28","codigo":"T1600R28","unidade":"1 peça","qtdCaixaM":8,"medidas":"280 MM","precoPorM":33.03,"ipi":0.0,"precoPorCaixa":264.24,"ean":null,"descricao":"Roseta T1600R28","nome2":"Roseta","unidQtdCx":"1 peça/8"},{"modelo":"R20","codigo":"T1600R20","unidade":"1 peça","qtdCaixaM":8,"medidas":"200 MM","precoPorM":32.35,"ipi":0.0,"precoPorCaixa":258.8,"ean":null,"descricao":"Roseta T1600R20","nome2":"Roseta","unidQtdCx":"1 peça/8"},{"modelo":"Guia de Corte","codigo":"S30PCO01","unidade":"peça","qtdCaixaM":8,"medidas":null,"precoPorM":31.27,"ipi":0.0,"precoPorCaixa":250.16,"ean":null,"descricao":"Cx Corte S30PCO01","nome2":"Cx Corte","unidQtdCx":"peça/8"},{"modelo":"GARTFIX 5,00","codigo":"C3525000","unidade":"pote","qtdCaixaM":4,"medidas":"4 potes","precoPorM":164.43,"ipi":0.0,"precoPorCaixa":657.72,"ean":null,"descricao":"Cola C3525000","nome2":"Cola","unidQtdCx":"pote/4"},{"modelo":"GARTFIX 1,00","codigo":"C3521000","unidade":"pote","qtdCaixaM":12,"medidas":"12 potes","precoPorM":39.98,"ipi":0.0,"precoPorCaixa":479.76,"ean":null,"descricao":"Cola C3521000","nome2":"Cola","unidQtdCx":"pote/12"},{"modelo":"GARTFIX 0,40","codigo":"C3520400","unidade":"bisnaga","qtdCaixaM":24,"medidas":"24 bisnagas","precoPorM":25.37,"ipi":0.0,"precoPorCaixa":608.88,"ean":null,"descricao":"Cola C3520400","nome2":"Cola","unidQtdCx":"bisnaga/24"},{"modelo":"WB5C","codigo":"R150WB05-XXX","unidade":"Metro","qtdCaixaM":97.6,"medidas":"13x50x2440","precoPorM":18.67,"ipi":0.0,"precoPorCaixa":1822.192,"ean":null,"descricao":"Rodape Color R150WB05-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/97,6"},{"modelo":"WB7C","codigo":"R150WB07-XXX","unidade":"Metro","qtdCaixaM":51.24,"medidas":"18x70x2440","precoPorM":26.15,"ipi":0.0,"precoPorCaixa":1339.926,"ean":null,"descricao":"Rodape Color R150WB07-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/51,24"},{"modelo":"WB11C","codigo":"R150WB11-XXX","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":38.3,"ipi":0.0,"precoPorCaixa":1401.78,"ean":null,"descricao":"Rodape Color R150WB11-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/36,6"},{"modelo":"WB15C","codigo":"R150WB15-XXX","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":59.69,"ipi":0.0,"precoPorCaixa":1456.436,"ean":null,"descricao":"Rodape Color R150WB15-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/24,4"},{"modelo":"WB20C","codigo":"R150WB20-XXX","unidade":"Metro","qtdCaixaM":17.08,"medidas":"18x200x2440","precoPorM":95.74,"ipi":0.0,"precoPorCaixa":1635.2391999999998,"ean":null,"descricao":"Rodape Color R150WB20-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/17,08"},{"modelo":"FB7C","codigo":"R150FB07-XXX","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x70x2440","precoPorM":26.15,"ipi":0.0,"precoPorCaixa":1403.732,"ean":null,"descricao":"Rodape Color R150FB07-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/53,68"},{"modelo":"FB11C","codigo":"R150FB11-XXX","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":38.3,"ipi":0.0,"precoPorCaixa":1401.78,"ean":null,"descricao":"Rodape Color R150FB11-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/36,6"},{"modelo":"FB15C","codigo":"R150FB15-XXX","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":59.69,"ipi":0.0,"precoPorCaixa":1456.436,"ean":null,"descricao":"Rodape Color R150FB15-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/24,4"},{"modelo":"FB20C","codigo":"R150FB20-XXX","unidade":"Metro","qtdCaixaM":17.08,"medidas":"18x200x2440","precoPorM":95.74,"ipi":0.0,"precoPorCaixa":1635.2391999999998,"ean":null,"descricao":"Rodape Color R150FB20-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/17,08"},{"modelo":"FD1C","codigo":"R150FD01-XXX","unidade":"Metro","qtdCaixaM":43.92,"medidas":"15x100x2440","precoPorM":37.62,"ipi":0.0,"precoPorCaixa":1652.2703999999999,"ean":null,"descricao":"Rodape Color R150FD01-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/43,92"},{"modelo":"FL1C","codigo":"R150FL01-XXX","unidade":"Metro","qtdCaixaM":68.32,"medidas":"12x80x2440","precoPorM":30.49,"ipi":0.0,"precoPorCaixa":2083.0768,"ean":null,"descricao":"Rodape Color R150FL01-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/68,32"},{"modelo":"FL2C","codigo":"R150FL02-XXX","unidade":"Metro","qtdCaixaM":34.16,"medidas":"15x120x2440","precoPorM":41.1,"ipi":0.0,"precoPorCaixa":1403.9759999999999,"ean":null,"descricao":"Rodape Color R150FL02-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/34,16"},{"modelo":"FL3C","codigo":"R150FL03-XXX","unidade":"Metro","qtdCaixaM":126.88,"medidas":"17x55x2440","precoPorM":18.67,"ipi":0.0,"precoPorCaixa":2368.8496,"ean":null,"descricao":"Rodape Color R150FL03-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/126,88"},{"modelo":"DB6C","codigo":"R150DB06-XXX","unidade":"Metro","qtdCaixaM":126.88,"medidas":"17x55x2440","precoPorM":18.67,"ipi":0.0,"precoPorCaixa":2368.8496,"ean":null,"descricao":"Rodape Color R150DB06-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/126,88"},{"modelo":"DB7C","codigo":"R150DB07-XXX","unidade":"Metro","qtdCaixaM":58.56,"medidas":"18x70x2440","precoPorM":26.15,"ipi":0.0,"precoPorCaixa":1531.344,"ean":null,"descricao":"Rodape Color R150DB07-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/58,56"},{"modelo":"DB11C","codigo":"R150DB11-XXX","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":38.3,"ipi":0.0,"precoPorCaixa":1401.78,"ean":null,"descricao":"Rodape Color R150DB11-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/36,6"},{"modelo":"RS1C","codigo":"R150RS01-XXX","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x110x2440","precoPorM":45.24,"ipi":0.0,"precoPorCaixa":2428.4832,"ean":null,"descricao":"Rodape Color R150RS01-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/53,68"},{"modelo":"RS2C","codigo":"R150RS02-XXX","unidade":"Metro","qtdCaixaM":53.68,"medidas":"18x110x2440","precoPorM":45.24,"ipi":0.0,"precoPorCaixa":2428.4832,"ean":null,"descricao":"Rodape Color R150RS02-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/53,68"},{"modelo":"FN3C","codigo":"R150FN02-XXX","unidade":"Metro","qtdCaixaM":124,"medidas":"13x30x2000","precoPorM":18.21,"ipi":0.0,"precoPorCaixa":2258.04,"ean":null,"descricao":"Rodape Color R150FN02-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/124"},{"modelo":"FN7C","codigo":"R157FN07-XXX","unidade":"Metro","qtdCaixaM":60,"medidas":"13x70x2000","precoPorM":21.31,"ipi":0.0,"precoPorCaixa":1278.6,"ean":null,"descricao":"Rodape Color R157FN07-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/60"},{"modelo":"FN10C","codigo":"R157FN10-XXX","unidade":"Metro","qtdCaixaM":40,"medidas":"13x100x2000","precoPorM":31.18,"ipi":0.0,"precoPorCaixa":1247.2,"ean":null,"descricao":"Rodape Color R157FN10-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/40"},{"modelo":"FN15C","codigo":"R157FN15-XXX","unidade":"Metro","qtdCaixaM":24,"medidas":"13x150x2000","precoPorM":47.36,"ipi":0.0,"precoPorCaixa":1136.6399999999999,"ean":null,"descricao":"Rodape Color R157FN15-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/24"},{"modelo":"FZ7C","codigo":"R157FZ07-XXX","unidade":"Metro","qtdCaixaM":60,"medidas":"13x70x2000","precoPorM":21.38,"ipi":0.0,"precoPorCaixa":1282.8,"ean":null,"descricao":"Rodape Color R157FZ07-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/60"},{"modelo":"FZ10C","codigo":"R157FZ10-XXX","unidade":"Metro","qtdCaixaM":40,"medidas":"13x100x2000","precoPorM":31.18,"ipi":0.0,"precoPorCaixa":1247.2,"ean":null,"descricao":"Rodape Color R157FZ10-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/40"},{"modelo":"FZ15C","codigo":"R157FZ15-XXX","unidade":"Metro","qtdCaixaM":24,"medidas":"13x150x2000","precoPorM":47.36,"ipi":0.0,"precoPorCaixa":1136.6399999999999,"ean":null,"descricao":"Rodape Color R157FZ15-XXX","nome2":"Rodape Color","unidQtdCx":"Metro/24"},{"modelo":"MFN7C","codigo":null,"unidade":"Metro","qtdCaixaM":69.6,"medidas":"10x70x2400","precoPorM":17.78,"ipi":0.0,"precoPorCaixa":1066.8000000000002,"ean":null,"descricao":"Rodape Color ","nome2":"Rodape Color","unidQtdCx":"Metro/69,6"},{"modelo":"MFN10C","codigo":null,"unidade":"Metro","qtdCaixaM":52.8,"medidas":"10x100x2400","precoPorM":26.02,"ipi":0.0,"precoPorCaixa":1040.8,"ean":null,"descricao":"Rodape Color ","nome2":"Rodape Color","unidQtdCx":"Metro/52,8"},{"modelo":"MFZ7C","codigo":null,"unidade":"Metro","qtdCaixaM":69.6,"medidas":"10x70x2400","precoPorM":17.79,"ipi":0.0,"precoPorCaixa":426.96,"ean":null,"descricao":"Rodape Color ","nome2":"Rodape Color","unidQtdCx":"Metro/69,6"},{"modelo":"MFZ10C","codigo":null,"unidade":"Metro","qtdCaixaM":52.8,"medidas":"10x100x2400","precoPorM":26.02,"ipi":0.0,"precoPorCaixa":1561.2,"ean":null,"descricao":"Rodape Color ","nome2":"Rodape Color","unidQtdCx":"Metro/52,8"},{"modelo":"FB11 LED","codigo":"R150FB11-300","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":43.87,"ipi":0.0,"precoPorCaixa":1605.642,"ean":null,"descricao":"Rodape LED R150FB11-300","nome2":"Rodape LED","unidQtdCx":"Metro/36,6"},{"modelo":"WB11 LED","codigo":"R150WB11-300","unidade":"Metro","qtdCaixaM":36.6,"medidas":"18x110x2440","precoPorM":43.87,"ipi":0.0,"precoPorCaixa":1605.642,"ean":null,"descricao":"Rodape LED R150WB11-300","nome2":"Rodape LED","unidQtdCx":"Metro/36,6"},{"modelo":"FB15 LED","codigo":"R150FB15-300","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":60.25,"ipi":0.0,"precoPorCaixa":1470.1,"ean":null,"descricao":"Rodape LED R150FB15-300","nome2":"Rodape LED","unidQtdCx":"Metro/24,4"},{"modelo":"WB15 LED","codigo":"R150WB15-300","unidade":"Metro","qtdCaixaM":24.4,"medidas":"18x150x2440","precoPorM":60.25,"ipi":0.0,"precoPorCaixa":1470.1,"ean":null,"descricao":"Rodape LED R150WB15-300","nome2":"Rodape LED","unidQtdCx":"Metro/24,4"},{"modelo":"IL3","codigo":"R250IL03-300","unidade":"Metro","qtdCaixaM":60,"medidas":"33x50x2000mm","precoPorM":39.49,"ipi":0.0325,"precoPorCaixa":2369.4,"ean":null,"descricao":"Perfil LED R250IL03-300","nome2":"Perfil LED","unidQtdCx":"Metro/60"},{"modelo":"IL4","codigo":"R250IL04-300","unidade":"Metro","qtdCaixaM":48,"medidas":"36x60x2000mm","precoPorM":46.54,"ipi":0.0325,"precoPorCaixa":2233.92,"ean":null,"descricao":"Perfil LED R250IL04-300","nome2":"Perfil LED","unidQtdCx":"Metro/48"},{"modelo":"IL10","codigo":"R250IL10-300","unidade":"Metro","qtdCaixaM":28,"medidas":"23x80x2000mm","precoPorM":87.48,"ipi":0.0325,"precoPorCaixa":2449.44,"ean":null,"descricao":"Perfil LED R250IL10-300","nome2":"Perfil LED","unidQtdCx":"Metro/28"},{"modelo":"IL11","codigo":"R250IL11-300","unidade":"Metro","qtdCaixaM":26,"medidas":"20x80x2000mm","precoPorM":87.48,"ipi":0.0325,"precoPorCaixa":2274.48,"ean":null,"descricao":"Perfil LED R250IL11-300","nome2":"Perfil LED","unidQtdCx":"Metro/26"},{"modelo":"IL12","codigo":"R250IL12-300","unidade":"Metro","qtdCaixaM":60,"medidas":"25x20x2000mm","precoPorM":52.49,"ipi":0.0325,"precoPorCaixa":3149.4,"ean":null,"descricao":"Perfil LED R250IL12-300","nome2":"Perfil LED","unidQtdCx":"Metro/60"},{"modelo":"IL10 BLACK","codigo":"R250IL10-003","unidade":"Metro","qtdCaixaM":28,"medidas":"23x80x2000mm","precoPorM":104.98,"ipi":0.0325,"precoPorCaixa":2939.44,"ean":null,"descricao":"Perfil LED Black R250IL10-003","nome2":"Perfil LED Black","unidQtdCx":"Metro/28"},{"modelo":"IL11 BLACK","codigo":"R250IL11-003","unidade":"Metro","qtdCaixaM":26,"medidas":"20x80x2000mm","precoPorM":104.98,"ipi":0.0325,"precoPorCaixa":2729.48,"ean":null,"descricao":"Perfil LED Black R250IL11-003","nome2":"Perfil LED Black","unidQtdCx":"Metro/26"},{"modelo":"IL12 BLACK","codigo":"R250IL12-003","unidade":"Metro","qtdCaixaM":60,"medidas":"25x20x2000mm","precoPorM":62.99,"ipi":0.0325,"precoPorCaixa":3779.4,"ean":null,"descricao":"Perfil LED Black R250IL12-003","nome2":"Perfil LED Black","unidQtdCx":"Metro/60"},{"modelo":"CANELE L - 2,8","codigo":"P16000CL","unidade":"Peça","qtdCaixaM":"6 peças (2,02M²)","medidas":"14x120x2800mm","precoPorM":99.58,"ipi":0.0325,"precoPorCaixa":597.48,"ean":null,"descricao":"Painel P16000CL","nome2":"Painel","unidQtdCx":"Peça/6 peças (2,02M²)"},{"modelo":"CANELE S - 2,8","codigo":"P16000CS","unidade":"Peça","qtdCaixaM":"6 peças (1,68 M²)","medidas":"14x105x2800mm","precoPorM":95.74,"ipi":0.0325,"precoPorCaixa":574.4399999999999,"ean":null,"descricao":"Painel P16000CS","nome2":"Painel","unidQtdCx":"Peça/6 peças (1,68 M²)"},{"modelo":"CANELE L - 2,0","codigo":"P16700CL","unidade":"Peça","qtdCaixaM":"12 peças ( 2,88M² )","medidas":"14x120x2000mm","precoPorM":71.13,"ipi":0.0325,"precoPorCaixa":853.56,"ean":null,"descricao":"Painel P16700CL","nome2":"Painel","unidQtdCx":"Peça/12 peças ( 2,88M² )"},{"modelo":"CANELE S - 2,0","codigo":"P16700CS","unidade":"Peça","qtdCaixaM":"12 peças ( 2,52M² )","medidas":"14x105x2000mm","precoPorM":68.39,"ipi":0.0325,"precoPorCaixa":820.6800000000001,"ean":null,"descricao":"Painel P16700CS","nome2":"Painel","unidQtdCx":"Peça/12 peças ( 2,52M² )"},{"modelo":"GM2","codigo":"P1670GM2","unidade":"Peça","qtdCaixaM":30,"medidas":"18x25x2000mm","precoPorM":46.71,"ipi":0.0325,"precoPorCaixa":1401.3,"ean":null,"descricao":"Perfil Canele P1670GM2","nome2":"Perfil Canele","unidQtdCx":"Peça/30"}],"icmsSt":[{"uf":"AC","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"RO","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"PA","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"AM","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"RR","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"AP","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"TO","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"MG","st":0.150483,"icms":0.12,"icmsImport":0.04,"stCxCorte":0.160058,"perfisLed":0.175032,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"DF","st":0.248583,"icms":0.07,"icmsImport":0.04,"stCxCorte":0.24615,"perfisLed":0.2508,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"GO","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"SP","st":0.18,"icms":0.18,"icmsImport":0.04,"stCxCorte":0.216,"perfisLed":0.18,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"PR","st":0.1891,"icms":0.12,"icmsImport":0.04,"stCxCorte":0.1998,"perfisLed":0.29719,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"RS","st":0,"icms":0.12,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"RJ","st":0.23493,"icms":0.12,"icmsImport":0.04,"stCxCorte":0.2399,"perfisLed":0.3472,"rodatetoNac":0.25416,"rodatetoImp":0.36817,"roseta":0.24238,"semST":0},{"uf":"SC","st":0,"icms":0.12,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"ES","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"MT","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0.23675,"rodatetoImp":0.23654,"roseta":0,"semST":0},{"uf":"MS","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"AL","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"BA","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"CE","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"MA","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"PB","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"PE","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"PI","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"RN","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0},{"uf":"SE","st":0,"icms":0.07,"icmsImport":0.04,"stCxCorte":0,"perfisLed":0,"rodatetoNac":0,"rodatetoImp":0,"roseta":0,"semST":0}],"stGroups":{"rodatetoNac":["F","D","C","J","A2","A3","M2","K1"],"rodatetoImp":["A","A1","AT","B1","B2","B5","B8","E","GT","GR","GO","GP","H","I","K","M1","N","NE1","NE2","NE3","NE4","O","QR","SM","ST2","ST3","ST4","TI","TL","T4"],"guiaCorte":["CXCORTE"],"perfisLed":["IL3","IL4","IL10","IL11","IL12","IL10 BLACK","IL11 BLACK","IL12 BLACK"],"rosetas":["R40","RR30","RL30","RF30","R28","R20"],"semST":["KIT LAMBRI","CANELE L - 2,8","CANELE S - 2,8","CANELE L - 2,0","CANELE S - 2,0","GARTFIX 5,00","GARTFIX 1,00","GARTFIX 0,40","GM2"]},"cores":["GREY ROSE","PALHA","GREY","CINZA ESCURO","GRAFITE","PRETO"],"canal":["Revenda","Engenharia"],"frete":["Cliente Retira","FOB","CIF"],"prazo":["5 a 7 dias","15 a 20 dias","7 a 15 dias"],"condPagamento":["BONIFICAÇÃO","100% 30 ddl - sujeito a análise de crédito","A vista no ato do pedido","50% sinal + 30 ddl- sujeito a análise de crédito","30 / 60 ddl - sujeito a análise de crédito","30 / 60 / 90  ddl - sujeito a análise de crédito"],"supervisores":["Carolina Toledo (11) 9.7437-2918 carolina@gart.com.br","Walter Rossi Jr (11) 9.8266-7033 walter@gart.com.br","Eliana Zapeline (41) 9.9941-0139 eliana@gart.com.br","Paula Conego (11) 9.8189-7561 paula@gart.com.br","Ziza Cruz (61) 9.9890-0752 ziza@gart.com.br","Reginaldo Ferreira (11) 9.3362-8373 reginaldo.ferreira@gart.com.br","Rogério Silva (17)996209652 rogerio.silva@gart.com.br"],"representantes":[{"nome":"TIMADEL REP","uf":"DF","fone":"(61) 991611811","email":"marina@timadel.com.br"},{"nome":"D.A. REPRESENTACAO L","uf":"MG","fone":"(31)984665677","email":"fernandaguanaes@hotmail.com"},{"nome":"AMAZONIA REPRESENTAC","uf":"AM","fone":"(92)984157759","email":"amazonia.rep1@gmail.com"},{"nome":"QUALI REPRESENTACOES","uf":"MG","fone":"(35)988640899","email":"qualirepresentacoes@hotmail.com"},{"nome":"M F REPRESENTACOES","uf":"AC/RO","fone":"(69)999817018","email":"edenicecorrea@hotmail.com"},{"nome":"FERNANDO SOARES NSCI","uf":"GO ","fone":"(62)981594665","email":"obrarepresentacao@gmail.com"},{"nome":"ADRYANA GONÇALVES ","uf":"MG","fone":"(32)988868175","email":"adryanagoncalves19@gmail.com,"},{"nome":"E.A.R GESTAO EMPRESA","uf":"DF","fone":"(61) 991522333","email":"ear.consultoria@hotmail.com"},{"nome":"HIPER REPRESENTACOES","uf":"GO","fone":"(62)982250104","email":"rattesrepresentacoes@hotmail.com"},{"nome":"WESLEY FERNANDES REP","uf":"TO ","fone":"(63)984937421","email":"wesleyfernandes_1@hotmail.com"},{"nome":"FERNANDES & SEIXAS","uf":"MG ","fone":"(31)986538161","email":"fernandeseseixas@gmail.com"},{"nome":"MERCADAO DAS PECAS (RS LIMA REP) Rafael","uf":"PA","fone":"(94)991235745","email":"rslimarepresentacao@gmail.com"},{"nome":"PATRICE (PANNYR REPRESENTAÇÕES)","uf":"PA","fone":"(91)981352959","email":"coimbra_patrice@hotmail.com"},{"nome":"RAFAEL ALMEIDA REPRE","uf":"MG","fone":"(34)992002977","email":"vendasrep007042@gmail.com"},{"nome":"REGINALDO REPRESENTAÇÕES ","uf":"MG","fone":"(33)0988457334","email":"vendas.reginaldorepresentacoes@gmail.com"},{"nome":"Avante Representações Ltda ","uf":"PA","fone":"(91)981223458","email":"ricardo.rsfernandes@gmail.com"},{"nome":"Walter Rossi Jr ","uf":"SP","fone":"(11) 982667033","email":"walter@gart.com.br"},{"nome":"Bezerra & Castro Representações","uf":"TO ","fone":"(63)9 92387339","email":"natanb.castro@gmail.com"},{"nome":"Pará Brasil Representações","uf":"PA","fone":"(91)9 84123352","email":"parabrasil.pa@gmail.com"},{"nome":"Macro Negocios Empresariais Ltda","uf":"MG","fone":"(34)9 91999090","email":"elsojunior@hotmail.com"},{"nome":"E. R. Paixão Representações ","uf":"MG","fone":"(38) 9 99411778","email":"erpaixao17@hotmail.com"},{"nome":"Alvo representações","uf":"DF","fone":"(61) 991799099","email":"alvo.representacoes@gmail.com"},{"nome":"KMJ Representações","uf":"MS","fone":"(67) 999390906","email":"kmjrepresentacao@gmail.com"},{"nome":"Gontave Representações","uf":"MT","fone":"(65) 981206600","email":"dino.taveira@gmail.com"},{"nome":"Sergio Koshi","uf":"MS","fone":"(67) 999818781","email":"stsukumi@terra.com.br"},{"nome":"Aleth Representação Comercial Ltda ","uf":"RJ","fone":"(21)979151931","email":"loserevicosltda@gmail.com"},{"nome":"Grupo Protazio de Vendas","uf":"BA","fone":"(71)988995389","email":"comercial@grupoprotazio.com.br"}],"suframaFator":0.9075};
+
+// ============ ESTADO GLOBAL ============
+let CATALOG = null;          // dados de preços/listas (compartilhado)
+let AUTH = null;             // senhas (compartilhado)
+let isAdmin = false;
+let currentTab = 'orcamento';
+let adminSubTab = 'revenda';
+
+function defaultQuote(){
+  return {
+    data: new Date().toISOString().slice(0,10),
+    nrProposta: '',
+    canal: 'Revenda',
+    clienteEmpresa: '', clienteCNPJ: '', clienteIE: '', clienteEmailNFE: '',
+    clienteEndereco: '', clienteCidade: '', clienteUF: 'SP', clienteCEP: '',
+    contato: '', contatoFone: '', contatoEmail: '', nrOC: '',
+    representante: '', frete: 'CIF', transportadora: '', condPagamento: '', prazoEntrega: '', supervisor: '',
+    entregaEndereco: '', entregaBairro: '', entregaCidade: '', entregaUF: '', entregaCEP: '',
+    outrasInfo: '',
+    itens: [newItem()]
+  };
+}
+
+function newItem(){
+  return { id: crypto.randomUUID(), produto:'', qtd:1, cor:'', descPct:0 };
+}
+
+let quote = defaultQuote();
+
+// Limpa o orçamento atual e começa um novo do zero. Pede confirmação se já
+// houver algo preenchido, para não apagar trabalho por engano.
+function startNewQuote(){
+  const hasContent = quote.clienteEmpresa || quote.itens.some(i => i.produto);
+  if(hasContent && !confirm('Isso vai limpar todos os dados do orçamento atual. Deseja continuar?')){
+    return;
+  }
+  quote = defaultQuote();
+  switchTab('orcamento');
+  toast('Novo orçamento iniciado.');
+}
+
+// ============ FIREBASE (armazenamento compartilhado fora do Claude.ai) ============
+// 1) Crie um projeto gratuito em https://console.firebase.google.com
+// 2) Ative Firestore Database + Authentication (método Anônimo)
+// 3) Cole aqui embaixo a configuração do seu app web (Firebase > Configurações do
+//    projeto > Seus apps > ícone "</>"). Veja o passo a passo completo que te enviei.
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC13NhLEMU_9ezT-bRK3zCa_fUVKnxqcdY",
+  authDomain: "gart-orcamento.firebaseapp.com",
+  projectId: "gart-orcamento",
+  storageBucket: "gart-orcamento.firebasestorage.app",
+  messagingSenderId: "15626673237",
+  appId: "1:15626673237:web:a095b91ec2c32fb611c8dc"
+};
+
+let db = null;
+let firebaseReady = false;
+
+async function initFirebase(){
+  if(FIREBASE_CONFIG.apiKey === 'COLE_AQUI_SUA_API_KEY'){
+    console.warn('Firebase não configurado — dados não serão salvos entre usuários/sessões. Veja FIREBASE_CONFIG no código.');
+    return;
+  }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    await firebase.auth().signInAnonymously();
+    db = firebase.firestore();
+    firebaseReady = true;
+  }catch(e){
+    console.error('Falha ao iniciar Firebase:', e);
+    toast('Não foi possível conectar ao banco de dados. Veja o console.', true);
+  }
+}
+
+// ============ TOAST ============
+function toast(msg, isError){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--err)' : 'var(--ink)';
+  el.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=> el.classList.remove('show'), 2600);
+}
+
+// ============ STORAGE HELPERS (Firestore por baixo dos panos) ============
+// Mantém a mesma assinatura de antes (key, shared) para não precisar mexer no
+// resto do código — cada key vira um documento na coleção "gart_orcamento".
+async function storageGet(key, shared){
+  if(!db) return null;
+  try{
+    const snap = await db.collection('gart_orcamento').doc(key).get();
+    return snap.exists ? snap.data().raw : null;
+  }catch(e){ console.error('storage get failed', key, e); return null; }
+}
+async function storageSet(key, value, shared){
+  if(!db){ toast('Firebase não configurado — a alteração não será salva.', true); return false; }
+  try{
+    await db.collection('gart_orcamento').doc(key).set({ raw: value, updatedAt: Date.now() });
+    return true;
+  }catch(e){ console.error('storage set failed', key, e); return false; }
+}
+
+async function loadAuth(){
+  const raw = await storageGet('gart:auth', true);
+  if(raw){ AUTH = JSON.parse(raw); }
+  else{
+    AUTH = { accessPassword: 'gart2026', adminPassword: 'admin2026' };
+    await storageSet('gart:auth', JSON.stringify(AUTH), true);
+  }
+}
+
+async function loadCatalog(){
+  const raw = await storageGet('gart:catalog', true);
+  if(raw){ CATALOG = JSON.parse(raw); }
+  else{
+    CATALOG = DEFAULT_CATALOG;
+    await storageSet('gart:catalog', JSON.stringify(CATALOG), true);
+  }
+}
+
+async function saveCatalog(){
+  const ok = await storageSet('gart:catalog', JSON.stringify(CATALOG), true);
+  if(ok) toast('Tabelas atualizadas com sucesso.');
+  else toast('Falha ao salvar. Tente novamente.', true);
+  return ok;
+}
+
+async function saveAuth(){
+  const ok = await storageSet('gart:auth', JSON.stringify(AUTH), true);
+  if(ok) toast('Senha atualizada.');
+  else toast('Falha ao salvar senha.', true);
+  return ok;
+}
+
+// ============ LOGIN ============
+async function doLogin(){
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  await firebaseInitPromise;
+  if(!AUTH) await loadAuth();
+  if(pass === AUTH.accessPassword){
+    isAdmin = false;
+    await bootApp();
+  } else if(pass === AUTH.adminPassword){
+    isAdmin = true;
+    await bootApp();
+  } else {
+    errEl.textContent = 'Senha incorreta.';
+  }
+}
+const firebaseInitPromise = initFirebase();
+document.addEventListener('click', closeSuggestOutsideClick);
+document.getElementById('login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+function doLogout(){
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  isAdmin = false;
+}
+
+async function bootApp(){
+  if(!CATALOG) await loadCatalog();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'block';
+  document.getElementById('tab-btn-admin').style.display = 'inline-block';
+  switchTab('orcamento');
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tab-btn-orcamento').classList.toggle('active', tab==='orcamento');
+  document.getElementById('tab-btn-admin').classList.toggle('active', tab==='admin');
+  if(tab === 'orcamento') renderOrcamento();
+  else renderAdmin();
+}
+
+// ============ MOTOR DE CÁLCULO (replica as fórmulas da planilha original) ============
+function findProduto(modelo, canal){
+  const list = canal === 'Engenharia' ? CATALOG.engenharia : CATALOG.revenda;
+  return list.find(p => p.modelo.toLowerCase() === (modelo||'').trim().toLowerCase()) || null;
+}
+
+function getIcmsRow(uf){
+  uf = (uf||'').trim().toUpperCase();
+  return CATALOG.icmsSt.find(r => r.uf.toUpperCase() === uf) || null;
+}
+
+function getClientIcmsRate(canal, uf){
+  if(canal === 'Engenharia') return 0.18;
+  const row = getIcmsRow(uf);
+  return row ? row.icms : 0;
+}
+
+function getPrecoTabela(produtoData, canal, clientIcmsRate){
+  if(!produtoData) return null;
+  if(canal === 'Engenharia') return produtoData.precoPorM;
+  if(clientIcmsRate === 0.07) return produtoData.preco7;
+  if(clientIcmsRate === 0.12) return produtoData.preco12;
+  if(clientIcmsRate === 0.18) return produtoData.preco18;
+  return null; // ICMS do estado do cliente não bate com nenhuma das 3 faixas da tabela Revenda
+}
+
+function lookupSTPercent(modelo, canal, uf){
+  if(canal === 'Engenharia') return 0;
+  const row = getIcmsRow(uf);
+  if(!row) return 0;
+  const g = CATALOG.stGroups;
+  const m = (modelo||'').trim();
+  if(g.rodatetoNac.includes(m)) return row.rodatetoNac;
+  if(g.guiaCorte.includes(m)) return row.stCxCorte;
+  if(g.rodatetoImp.includes(m)) return row.rodatetoImp;
+  if(g.perfisLed.includes(m)) return row.perfisLed;
+  if(g.rosetas.includes(m)) return row.roseta;
+  if(g.semST.includes(m)) return 0;
+  return row.st;
+}
+
+function calcItem(item, header){
+  const produtoData = findProduto(item.produto, header.canal);
+  const clientIcmsRate = getClientIcmsRate(header.canal, header.clienteUF);
+  const precoTabela = getPrecoTabela(produtoData, header.canal, clientIcmsRate);
+  const descPct = (parseFloat(item.descPct)||0) / 100;
+  const qtd = parseFloat(item.qtd) || 0;
+
+  const precoTabelaNum = precoTabela == null ? 0 : precoTabela;
+  const precoComDesconto = precoTabelaNum * (1 - descPct);
+  const precoSuframa = precoComDesconto * CATALOG.suframaFator;
+  const isAM = (header.clienteUF||'').trim().toUpperCase() === 'AM';
+  const precoUnitario = (isAM && header.canal === 'Revenda') ? precoSuframa : precoComDesconto;
+
+  const ipiPct = produtoData ? (produtoData.ipi || 0) : 0;
+  const stPct = produtoData ? lookupSTPercent(item.produto, header.canal, header.clienteUF) : 0;
+
+  const valorIPI = precoComDesconto * ipiPct;
+  const valorST = precoComDesconto * stPct;
+  const valorTotalUnit = precoUnitario + valorIPI + valorST;
+  const valorTotalLinha = qtd * valorTotalUnit;
+  const subTotal = precoUnitario * qtd; // Sub.Total = preço unitário x qtd, sem impostos (igual coluna W da planilha original)
+
+  return {
+    produtoData, precoTabela: precoTabelaNum, precoComDesconto, precoUnitario, subTotal,
+    ipiPct, stPct, valorIPI, valorST, valorTotalUnit, valorTotalLinha,
+    encontrado: !!produtoData, precoIndefinido: precoTabela == null && !!produtoData
+  };
+}
+
+function fmtMoney(n){
+  return (n||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+function fmtPct(n){
+  return ((n||0)*100).toLocaleString('pt-BR', {maximumFractionDigits:2}) + '%';
+}
+
+function productList(canal){
+  return canal === 'Engenharia' ? CATALOG.engenharia : CATALOG.revenda;
+}
+
+// classe aplicada a campos vazios: some na impressão para evitar espaço em branco desperdiçado
+function ec(value){ return (value && String(value).trim()) ? '' : 'empty-field'; }
+
+function renderGartPanel(){
+  return `
+    <div class="panel gart-panel">
+      <h2>Dados Cadastrais GART</h2>
+      <div class="row">
+        <div class="field" style="flex:2"><label>Empresa</label><div class="static-value">NMC DECO INDUSTRIA S/A</div></div>
+        <div class="field"><label>CNPJ</label><div class="static-value">16.575.826/0001-19</div></div>
+        <div class="field"><label>Insc. Est.</label><div class="static-value">407.316.043.119</div></div>
+        <div class="field"><label>PIX</label><div class="static-value">16.575.826/0001-19</div></div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:2"><label>Endereço</label><div class="static-value">R. Antonio O. Rodrigues, 1010 Pq. Ind.</div></div>
+        <div class="field"><label>Cidade</label><div class="static-value">Jundiaí</div></div>
+        <div class="field" style="max-width:100px"><label>UF</label><div class="static-value">SP</div></div>
+        <div class="field"><label>CEP</label><div class="static-value">13.213-180</div></div>
+      </div>
+    </div>`;
+}
+
+function renderOrcamento(){
+  const main = document.getElementById('main-content');
+  const ufOptions = CATALOG.icmsSt.map(r => `<option value="${r.uf}" ${r.uf===quote.clienteUF?'selected':''}>${r.uf}</option>`).join('');
+  const ufOptionsEntrega = '<option value="">—</option>' + CATALOG.icmsSt.map(r => `<option value="${r.uf}" ${r.uf===quote.entregaUF?'selected':''}>${r.uf}</option>`).join('');
+  const canalOptions = CATALOG.canal.map(c => `<option value="${c}" ${c===quote.canal?'selected':''}>${c}</option>`).join('');
+  const freteOptions = CATALOG.frete.map(c => `<option value="${c}" ${c===quote.frete?'selected':''}>${c}</option>`).join('');
+  const prazoOptions = CATALOG.prazo.map(c => `<option value="${c}" ${c===quote.prazoEntrega?'selected':''}>${c}</option>`).join('');
+  const condOptions = CATALOG.condPagamento.map(c => `<option value="${c}" ${c===quote.condPagamento?'selected':''}>${c}</option>`).join('');
+  const corOptions = ['', ...CATALOG.cores];
+
+  let itemsRows = '';
+  quote.itens.forEach((item) => { itemsRows += renderItemRow(item, corOptions); });
+
+  main.innerHTML = `
+    <div class="print-heading">
+      <div class="ph-logo">GART<span>.</span></div>
+      <div class="ph-meta">
+        Orçamento ${quote.nrProposta ? '· Nº ' + escapeHtml(quote.nrProposta) : ''} · ${formatDateBR(quote.data)} · Canal: ${escapeHtml(quote.canal)}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Dados do Orçamento</h2>
+      <div class="row">
+        <div class="field"><label>Data</label><input type="date" value="${quote.data}" onchange="updateHeader('data',this.value)"></div>
+        <div class="field ${ec(quote.nrProposta)}"><label>Nº Proposta</label><input value="${escapeHtml(quote.nrProposta)}" onchange="updateHeader('nrProposta',this.value)"></div>
+        <div class="field"><label>Canal de Vendas</label><select onchange="updateHeader('canal',this.value)">${canalOptions}</select></div>
+      </div>
+    </div>
+
+    ${renderGartPanel()}
+
+    <div class="panel">
+      <h2>Dados do Cliente</h2>
+      <div class="row">
+        <div class="field ${ec(quote.clienteEmpresa)}" style="flex:2"><label>Empresa</label><input value="${escapeHtml(quote.clienteEmpresa)}" onchange="updateHeader('clienteEmpresa',this.value)"></div>
+        <div class="field ${ec(quote.clienteCNPJ)}"><label>CNPJ</label><input value="${escapeHtml(quote.clienteCNPJ)}" onchange="updateHeader('clienteCNPJ',this.value)"></div>
+        <div class="field ${ec(quote.clienteIE)}"><label>Insc. Est.</label><input value="${escapeHtml(quote.clienteIE)}" onchange="updateHeader('clienteIE',this.value)"></div>
+      </div>
+      <div class="row">
+        <div class="field ${ec(quote.clienteEndereco)}" style="flex:2"><label>Endereço</label><input value="${escapeHtml(quote.clienteEndereco)}" onchange="updateHeader('clienteEndereco',this.value)"></div>
+        <div class="field ${ec(quote.clienteCidade)}"><label>Cidade</label><input value="${escapeHtml(quote.clienteCidade)}" onchange="updateHeader('clienteCidade',this.value)"></div>
+        <div class="field" style="max-width:100px"><label>UF</label><select onchange="updateHeader('clienteUF',this.value)">${ufOptions}</select></div>
+        <div class="field ${ec(quote.clienteCEP)}"><label>CEP</label><input value="${escapeHtml(quote.clienteCEP)}" onchange="updateHeader('clienteCEP',this.value)"></div>
+      </div>
+      <div class="row">
+        <div class="field ${ec(quote.clienteEmailNFE)}"><label>Email NF-e</label><input value="${escapeHtml(quote.clienteEmailNFE)}" onchange="updateHeader('clienteEmailNFE',this.value)"></div>
+        <div class="field ${ec(quote.contato)}"><label>Contato</label><input value="${escapeHtml(quote.contato)}" onchange="updateHeader('contato',this.value)"></div>
+        <div class="field ${ec(quote.contatoFone)}"><label>Fone</label><input value="${escapeHtml(quote.contatoFone)}" onchange="updateHeader('contatoFone',this.value)"></div>
+        <div class="field ${ec(quote.nrOC)}"><label>Nº O.C.</label><input value="${escapeHtml(quote.nrOC)}" onchange="updateHeader('nrOC',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Endereço de Entrega (Construtora)</h2>
+      <p class="hint no-print" style="margin-top:-8px">Preencha quando a entrega for feita direto na obra/construtora, em endereço diferente do cliente.</p>
+      <div class="row">
+        <div class="field ${ec(quote.entregaEndereco)}" style="flex:2"><label>Endereço</label><input value="${escapeHtml(quote.entregaEndereco)}" onchange="updateHeader('entregaEndereco',this.value)"></div>
+        <div class="field ${ec(quote.entregaBairro)}"><label>Bairro</label><input value="${escapeHtml(quote.entregaBairro)}" onchange="updateHeader('entregaBairro',this.value)"></div>
+      </div>
+      <div class="row">
+        <div class="field ${ec(quote.entregaCidade)}"><label>Cidade</label><input value="${escapeHtml(quote.entregaCidade)}" onchange="updateHeader('entregaCidade',this.value)"></div>
+        <div class="field ${ec(quote.entregaUF)}" style="max-width:100px"><label>UF</label><select onchange="updateHeader('entregaUF',this.value)">${ufOptionsEntrega}</select></div>
+        <div class="field ${ec(quote.entregaCEP)}"><label>CEP</label><input value="${escapeHtml(quote.entregaCEP)}" onchange="updateHeader('entregaCEP',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Condição Comercial &amp; Transporte</h2>
+      <div class="row">
+        <div class="field"><label>Frete</label><select onchange="updateHeader('frete',this.value)">${freteOptions}</select></div>
+        <div class="field ${ec(quote.transportadora)}"><label>Transportadora</label><input value="${escapeHtml(quote.transportadora)}" onchange="updateHeader('transportadora',this.value)"></div>
+        <div class="field ${ec(quote.condPagamento)}"><label>Condição de Pagamento</label><select onchange="updateHeader('condPagamento',this.value)"><option value="">—</option>${condOptions}</select></div>
+        <div class="field ${ec(quote.prazoEntrega)}"><label>Prazo de Entrega</label><select onchange="updateHeader('prazoEntrega',this.value)"><option value="">—</option>${prazoOptions}</select></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar no-print">
+        <h2 style="border:none;margin:0;padding:0">Itens do Orçamento</h2>
+        <div style="display:flex;gap:14px;align-items:center">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--slate)">
+            <input type="checkbox" style="width:auto" onchange="document.body.classList.toggle('hide-desc-print', this.checked)">
+            Ocultar coluna de desconto no PDF
+          </label>
+          <button class="btn-ghost btn-sm" onclick="addItem()">+ Adicionar item</button>
+          <button class="btn-primary btn-sm" onclick="window.print()">Exportar / Salvar PDF</button>
+        </div>
+      </div>
+      <p class="hint no-print" style="margin-top:-6px">Na janela de impressão, em "Mais configurações", desmarque <b>"Cabeçalhos e rodapés"</b> para remover a data/URL que o navegador adiciona automaticamente nas bordas da página.</p>
+      <div class="subgrid" style="overflow-y:visible">
+      <table id="items-table">
+        <thead><tr>
+          <th style="min-width:150px">Produto</th>
+          <th style="width:100px">Qtd</th>
+          <th>Unid/Quant.Cx</th>
+          <th>Descrição</th>
+          <th>Cor</th>
+          <th>Dimensão mm</th>
+          <th class="col-desc" style="width:70px">% Desc.</th>
+          <th class="num">Preço Unit.</th>
+          <th class="num">Sub.Total</th>
+          <th class="num">% IPI</th>
+          <th class="num">% ST</th>
+          <th class="num">Valor Total</th>
+          <th class="no-print"></th>
+        </tr></thead>
+        <tbody id="items-tbody">${itemsRows || emptyRow()}</tbody>
+      </table>
+      </div>
+      <div class="totals-bar">
+        <div><span class="t-label">Qtd. total de itens</span><span class="t-value" id="tot-itens">0</span></div>
+        <div><span class="t-label">Total IPI</span><span class="t-value" id="tot-ipi">R$ 0,00</span></div>
+        <div><span class="t-label">Total ST</span><span class="t-value" id="tot-st">R$ 0,00</span></div>
+        <div class="t-grand"><span class="t-label">VALOR TOTAL</span><span class="t-value" id="tot-geral">R$ 0,00</span></div>
+      </div>
+      <p class="hint no-print">Clique no campo Produto (ou digite) para ver sugestões. Cálculos replicam a lógica original da planilha (preço por faixa de ICMS do estado do cliente, desconto Suframa para AM, IPI e ST por grupo de produto, calculados individualmente por item).</p>
+    </div>
+
+    ${renderInfoPanel()}
+    ${renderContatosPanel()}
+  `;
+  // Corrige linhas que ficariam em branco: toda vez que a tela é redesenhada por
+  // completo (novo item, campo do cabeçalho, etc.), as células calculadas de cada
+  // linha precisam ser recalculadas de novo — elas nascem como "—" no template.
+  quote.itens.forEach(item => recomputeRow(item.id));
+  recomputeTotals();
+}
+
+function emptyRow(){
+  return '<tr><td colspan="13" class="muted" style="text-align:center;padding:20px">Nenhum item adicionado.</td></tr>';
+}
+
+function renderItemRow(item, corOptions){
+  return `
+    <tr data-row-id="${item.id}">
+      <td>
+        <input type="text" class="prod-input" autocomplete="off" value="${escapeHtml(item.produto)}"
+          placeholder="Ex: WB5"
+          oninput="onProdInput('${item.id}', this.value)"
+          onfocus="onProdInput('${item.id}', this.value)"
+          data-row="${item.id}">
+      </td>
+      <td>
+        <input type="text" inputmode="decimal" class="qty-input" value="${item.qtd}"
+          oninput="onQtyInput('${item.id}', this.value)">
+      </td>
+      <td class="small" data-cell="unid">—</td>
+      <td class="small" data-cell="desc">—</td>
+      <td>
+        <select onchange="onCorChange('${item.id}', this.value)">
+          ${corOptions.map(c=>`<option value="${escapeHtml(c)}" ${c===item.cor?'selected':''}>${c||'—'}</option>`).join('')}
+        </select>
+      </td>
+      <td class="small" data-cell="dim">—</td>
+      <td class="col-desc"><input type="number" min="0" max="100" step="0.5" value="${item.descPct}" title="% Desconto"
+          oninput="onDescPctInput('${item.id}', this.value)"></td>
+      <td class="num" data-cell="preco">—</td>
+      <td class="num" data-cell="subtotal">—</td>
+      <td class="num" data-cell="ipi">—</td>
+      <td class="num" data-cell="st">—</td>
+      <td class="num" data-cell="total" style="font-weight:700">—</td>
+      <td class="no-print"><button class="item-remove" title="Remover" onclick="removeItem('${item.id}')">✕</button></td>
+    </tr>`;
+}
+
+// ---- Autocomplete de produto (caixa única fixa — não é cortada por scroll de tabela) ----
+let __activeSuggestRow = null;
+
+function onProdInput(id, value){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item.produto = value;
+  const inputEl = document.querySelector(`input.prod-input[data-row="${id}"]`);
+  showSuggestions(id, value, inputEl);
+  recomputeRow(id);
+}
+
+function positionSuggestBox(inputEl, box){
+  const r = inputEl.getBoundingClientRect();
+  const estHeight = Math.min(300, box.scrollHeight || 300);
+  box.style.minWidth = Math.max(r.width, 340) + 'px';
+  box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 360)) + 'px';
+  if(r.bottom + estHeight > window.innerHeight && r.top > estHeight){
+    box.style.top = 'auto';
+    box.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+  } else {
+    box.style.bottom = 'auto';
+    box.style.top = (r.bottom + 4) + 'px';
+  }
+}
+
+function showSuggestions(id, query, inputEl){
+  const box = document.getElementById('suggest-shared');
+  if(!box || !inputEl) return;
+  __activeSuggestRow = id;
+  const q = (query||'').trim().toLowerCase();
+  const list = productList(quote.canal);
+  let results;
+
+  if(q.length === 0){
+    // campo vazio: mostra os primeiros produtos da tabela para o usuário navegar/conferir, como no dropdown antigo
+    results = list.slice(0, 40);
+  } else {
+    const starts = [];
+    const contains = [];
+    for(const p of list){
+      const modelo = (p.modelo||'').toLowerCase();
+      const desc = (p.descricao||'').toLowerCase();
+      if(modelo.startsWith(q)) starts.push(p);
+      else if(modelo.includes(q) || desc.includes(q)) contains.push(p);
+      if(starts.length + contains.length > 40) break;
+    }
+    results = [...starts, ...contains].slice(0, 20);
+  }
+
+  if(results.length === 0){
+    box.innerHTML = '<div class="suggest-empty">Nenhum produto encontrado</div>';
+  } else {
+    box.innerHTML = results.map(p => `
+      <div class="suggest-item" onmousedown="selectProduto('${id}','${p.modelo.replace(/'/g,"\\'")}')">
+        <span class="suggest-modelo">${escapeHtml(p.modelo)}</span>
+        <span class="suggest-desc">${escapeHtml(p.descricao||'')}</span>
+        <span class="suggest-unid">${escapeHtml(p.unidQtdCx||'')}</span>
+      </div>`).join('');
+  }
+  box.style.display = 'block';
+  positionSuggestBox(inputEl, box);
+}
+
+function selectProduto(id, modelo){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item.produto = modelo;
+  const input = document.querySelector(`input.prod-input[data-row="${id}"]`);
+  if(input) input.value = modelo;
+  hideSuggestBox();
+  recomputeRow(id);
+  // move foco para o campo de quantidade, já pronto para o usuário digitar o volume
+  const row = document.querySelector(`tr[data-row-id="${id}"]`);
+  const qtyInput = row ? row.querySelector('.qty-input') : null;
+  if(qtyInput){ qtyInput.focus(); qtyInput.select(); }
+}
+
+function hideSuggestBox(){
+  const box = document.getElementById('suggest-shared');
+  if(box){ box.style.display = 'none'; box.innerHTML = ''; }
+  __activeSuggestRow = null;
+}
+
+function closeSuggestOutsideClick(e){
+  if(e.target.closest && (e.target.closest('.prod-input') || e.target.closest('#suggest-shared'))) return;
+  document.querySelectorAll('.suggest-box').forEach(b => { b.style.display='none'; });
+}
+
+window.addEventListener('scroll', () => {
+  if(!__activeSuggestRow) return;
+  const box = document.getElementById('suggest-shared');
+  const input = document.querySelector(`input.prod-input[data-row="${__activeSuggestRow}"]`);
+  if(box && input && box.style.display !== 'none') positionSuggestBox(input, box);
+}, true);
+
+// ---- Quantidade (sem spinner, digitação livre — pensado para volumes grandes tipo 8000) ----
+function onQtyInput(id, rawValue){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  // aceita dígitos, vírgula e ponto; converte vírgula decimal para ponto internamente
+  const cleaned = rawValue.replace(/[^0-9.,]/g, '');
+  item.qtd = cleaned.replace(',', '.');
+  recomputeRow(id);
+}
+
+function onDescPctInput(id, value){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item.descPct = value;
+  recomputeRow(id);
+}
+
+function onCorChange(id, value){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item.cor = value;
+  // não afeta cálculo, sem necessidade de recompute
+}
+
+// ---- Recalcula uma linha sem re-renderizar a tabela inteira (preserva o foco do campo) ----
+function recomputeRow(id){
+  const item = quote.itens.find(i => i.id === id);
+  const row = document.querySelector(`tr[data-row-id="${id}"]`);
+  if(!item || !row) return;
+  const calc = calcItem(item, quote);
+
+  row.querySelector('[data-cell="unid"]').textContent = calc.produtoData ? (calc.produtoData.unidQtdCx || calc.produtoData.unidade || '—') : '—';
+  row.querySelector('[data-cell="desc"]').textContent = calc.produtoData ? (calc.produtoData.descricao || '—') : '—';
+  row.querySelector('[data-cell="dim"]').textContent = calc.produtoData ? (calc.produtoData.medidas || '—') : '—';
+
+  row.querySelector('[data-cell="preco"]').textContent = fmtMoney(calc.precoUnitario);
+  row.querySelector('[data-cell="subtotal"]').textContent = fmtMoney(calc.subTotal);
+  row.querySelector('[data-cell="ipi"]').textContent = fmtPct(calc.ipiPct);
+  row.querySelector('[data-cell="st"]').textContent = fmtPct(calc.stPct);
+  row.querySelector('[data-cell="total"]').textContent = fmtMoney(calc.valorTotalLinha);
+
+  recomputeTotals();
+}
+
+function recomputeTotals(){
+  let totalGeral = 0, totalIPI = 0, totalST = 0, totalItens = 0;
+  quote.itens.forEach(item => {
+    const calc = calcItem(item, quote);
+    const qtd = parseFloat(item.qtd) || 0;
+    totalGeral += calc.valorTotalLinha;
+    totalIPI += calc.valorIPI * qtd;
+    totalST += calc.valorST * qtd;
+    totalItens += qtd;
+  });
+  const set = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+  set('tot-itens', totalItens.toLocaleString('pt-BR'));
+  set('tot-ipi', fmtMoney(totalIPI));
+  set('tot-st', fmtMoney(totalST));
+  set('tot-geral', fmtMoney(totalGeral));
+}
+
+function renderInfoPanel(){
+  return `
+    <div class="panel info-panel">
+      <h2>Observação</h2>
+      <p class="obs-text">Quando não houver indicação na coluna COR, é porque o rodapé é branco. Colorido abaixo de 21 peças, adicionar as letras CM ao final do nome do produto; acima de 21 peças, adicionar apenas C. Ex.: WB5, WB5CM (abaixo de 21) / Ex.: WB5, WB5C (acima de 21).</p>
+
+      <h2 style="margin-top:10px">Descrição do Produto</h2>
+      <table class="desc-table">
+        <tbody>
+          <tr><td class="desc-nome">Molduras Nomastyl</td><td>Perfil decorativo de poliestireno extrudado com superfície lisa. Livre do gás CFC. Forma: Perfil 2,00 m</td></tr>
+          <tr><td class="desc-nome">Boiseries e Rodameio</td><td>Perfil decorativo de poliuretano injetado com superfície lisa. Livre do gás CFC. Forma: Perfil 2,00 m</td></tr>
+          <tr><td class="desc-nome">Cola GARTFIX</td><td>Cola acrílica para fixação de roda-tetos, roda-meios e rodapés.</td></tr>
+          <tr><td class="desc-nome">Rodapés</td><td>Perfil de poliestireno extrudado de alta densidade HDPS Wallstyl® com superfície lisa e verso fresado para melhor aderência da cola, altamente resistente e indicado para áreas internas. Forma: Perfil de 2,44 m, 2,40 m ou 2,00 m.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style="margin-top:10px">Informações Adicionais</h2>
+      <table class="desc-table">
+        <tbody>
+          <tr><td class="desc-nome" style="width:140px">Horário de Coleta</td><td>Segunda a Quinta: 7h às 16h30 / Sexta: 7h às 15h30</td></tr>
+          <tr><td class="desc-nome">Pedido Mínimo</td><td>R$ 1.000,00</td></tr>
+          <tr><td class="desc-nome">Outras Informações</td><td>
+            <input class="no-print" value="${escapeHtml(quote.outrasInfo)}" placeholder="Opcional" onchange="updateHeader('outrasInfo',this.value)">
+            <span class="print-only">${escapeHtml(quote.outrasInfo) || '—'}</span>
+          </td></tr>
+        </tbody>
+      </table>
+
+      <p class="obs-final">Na aprovação deste orçamento, favor retransmitir a proposta assinada.</p>
+    </div>`;
+}
+
+function renderContatosPanel(){
+
+  const repOptions = CATALOG.representantes.map(r => `<option value="${escapeHtml(r.nome)}" ${r.nome===quote.representante?'selected':''}>${escapeHtml(r.nome)} (${escapeHtml(r.uf)})</option>`).join('');
+  const supOptions = CATALOG.supervisores.map(s => `<option value="${escapeHtml(s)}" ${s===quote.supervisor?'selected':''}>${escapeHtml(s)}</option>`).join('');
+
+  const rep = CATALOG.representantes.find(r => r.nome === quote.representante);
+  const repContato = rep
+    ? `<div class="small" style="margin-top:6px">Tel: ${escapeHtml(rep.fone||'—')} &nbsp;·&nbsp; Email: ${escapeHtml(rep.email||'—')}</div>`
+    : `<div class="small muted" style="margin-top:6px">Selecione um representante para ver o contato</div>`;
+
+  return `
+    <div class="panel">
+      <h2>Responsáveis pelo Orçamento</h2>
+      <div class="row no-print">
+        <div class="field">
+          <label>Representante</label>
+          <select onchange="updateHeader('representante',this.value)"><option value="">—</option>${repOptions}</select>
+          ${repContato}
+        </div>
+        <div class="field">
+          <label>Supervisor</label>
+          <select onchange="updateHeader('supervisor',this.value)"><option value="">—</option>${supOptions}</select>
+        </div>
+      </div>
+      <div class="signoff">
+        <div class="box"><b>Representante</b><div class="small">${escapeHtml(quote.representante || '—')}${rep ? ' — ' + escapeHtml(rep.fone||'') + (rep.email ? ' — ' + escapeHtml(rep.email) : '') : ''}</div></div>
+        <div class="box"><b>Supervisor</b><div class="small">${escapeHtml(quote.supervisor || '—')}</div></div>
+        <div class="box"><b>Assinatura do Comprador</b><div class="small">&nbsp;</div></div>
+      </div>
+      <p class="hint no-print">Estes dados aparecem também na versão impressa/PDF, para o cliente saber a quem recorrer.</p>
+    </div>`;
+}
+
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatDateBR(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return (d && m && y) ? `${d}/${m}/${y}` : iso;
+}
+
+function updateHeader(field, value){
+  quote[field] = value;
+  renderOrcamento();
+}
+
+function updateItem(id, field, value){
+  // mantido por compatibilidade; uso pontual (ex.: painel admin não usa isto)
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item[field] = value;
+  recomputeRow(id);
+}
+
+function addItem(){
+  quote.itens.push(newItem());
+  renderOrcamento();
+}
+function removeItem(id){
+  quote.itens = quote.itens.filter(i => i.id !== id);
+  renderOrcamento();
+}
+
+let adminSearch = '';
+
+function renderAdmin(){
+  const main = document.getElementById('main-content');
+
+  if(!isAdmin){
+    main.innerHTML = `
+      <div class="panel">
+        <h2>Administração</h2>
+        <p>Esta área requer a senha de administrador. Faça login novamente usando a senha de administração para editar tabelas de preços e listas.</p>
+        <button class="btn-primary" onclick="doLogout()">Ir para tela de login</button>
+      </div>`;
+    return;
+  }
+
+  main.innerHTML = `
+    <div class="admin-tabs no-print">
+      <button class="${adminSubTab==='revenda'?'active':''}" onclick="setAdminSubTab('revenda')">Preços · Revenda (${CATALOG.revenda.length})</button>
+      <button class="${adminSubTab==='engenharia'?'active':''}" onclick="setAdminSubTab('engenharia')">Preços · Engenharia (${CATALOG.engenharia.length})</button>
+      <button class="${adminSubTab==='icms'?'active':''}" onclick="setAdminSubTab('icms')">ICMS / ST por Estado</button>
+      <button class="${adminSubTab==='listas'?'active':''}" onclick="setAdminSubTab('listas')">Listas Suspensas</button>
+      <button class="${adminSubTab==='seguranca'?'active':''}" onclick="setAdminSubTab('seguranca')">Segurança</button>
+    </div>
+    <div id="admin-body"></div>
+  `;
+  renderAdminBody();
+}
+
+function setAdminSubTab(tab){ adminSubTab = tab; adminSearch=''; renderAdmin(); }
+
+function renderAdminBody(){
+  const body = document.getElementById('admin-body');
+  if(adminSubTab === 'revenda') body.innerHTML = adminPriceTable('revenda');
+  else if(adminSubTab === 'engenharia') body.innerHTML = adminPriceTable('engenharia');
+  else if(adminSubTab === 'icms') body.innerHTML = adminIcmsTable();
+  else if(adminSubTab === 'listas') body.innerHTML = adminLists();
+  else if(adminSubTab === 'seguranca') body.innerHTML = adminSecurity();
+}
+
+// ---------- Tabelas de preço ----------
+function adminPriceTable(kind){
+  const list = CATALOG[kind];
+  const filtered = list
+    .map((p, idx) => ({...p, __idx: idx}))
+    .filter(p => !adminSearch || (p.modelo+p.descricao+p.codigo).toLowerCase().includes(adminSearch.toLowerCase()));
+
+  const isRevenda = kind === 'revenda';
+  const rows = filtered.map(p => `
+    <tr>
+      <td><input value="${escapeHtml(p.modelo)}" style="width:80px" onchange="editProduct('${kind}',${p.__idx},'modelo',this.value)"></td>
+      <td><input value="${escapeHtml(p.descricao)}" style="min-width:160px" onchange="editProduct('${kind}',${p.__idx},'descricao',this.value)"></td>
+      ${ isRevenda ? `
+        <td class="num"><input type="number" step="0.01" value="${p.preco18}" style="width:90px" onchange="editProduct('${kind}',${p.__idx},'preco18',this.value)"></td>
+        <td class="num"><input type="number" step="0.01" value="${p.preco12}" style="width:90px" onchange="editProduct('${kind}',${p.__idx},'preco12',this.value)"></td>
+        <td class="num"><input type="number" step="0.01" value="${p.preco7}" style="width:90px" onchange="editProduct('${kind}',${p.__idx},'preco7',this.value)"></td>
+      ` : `
+        <td class="num"><input type="number" step="0.01" value="${p.precoPorM}" style="width:100px" onchange="editProduct('${kind}',${p.__idx},'precoPorM',this.value)"></td>
+      `}
+      <td class="num"><input type="number" step="0.0001" value="${p.ipi}" style="width:80px" onchange="editProduct('${kind}',${p.__idx},'ipi',this.value)"></td>
+      <td class="no-print"><button class="item-remove" onclick="removeProduct('${kind}',${p.__idx})">✕</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="panel">
+      <div class="toolbar no-print">
+        <input class="search" placeholder="Buscar por modelo/descrição…" value="${escapeHtml(adminSearch)}"
+          oninput="adminSearch=this.value; renderAdminBody()">
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost btn-sm" onclick="addProductRow('${kind}')">+ Novo produto</button>
+          <button class="btn-primary btn-sm" onclick="saveCatalog()">Salvar alterações</button>
+        </div>
+      </div>
+      <div class="subgrid" style="max-height:560px;overflow-y:auto">
+      <table>
+        <thead><tr>
+          <th>Modelo</th><th>Descrição</th>
+          ${isRevenda ? '<th class="num">Preço 18%</th><th class="num">Preço 12%</th><th class="num">Preço 7%</th>' : '<th class="num">Preço / m</th>'}
+          <th class="num">IPI (decimal)</th><th class="no-print"></th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="muted">Nenhum produto encontrado.</td></tr>'}</tbody>
+      </table>
+      </div>
+      <p class="hint">Preços em reais (R$). IPI em formato decimal (ex.: 0.05 = 5%). Alterações só ficam visíveis para os usuários após clicar em "Salvar alterações".</p>
+    </div>`;
+}
+
+function editProduct(kind, idx, field, value){
+  const isNumeric = ['preco18','preco12','preco7','precoPorM','ipi'].includes(field);
+  CATALOG[kind][idx][field] = isNumeric ? (parseFloat(value)||0) : value;
+}
+function addProductRow(kind){
+  const base = kind === 'revenda'
+    ? { modelo:'NOVO', codigo:'', unidade:'', qtdCaixa:'', medidas:'', preco18:0, preco12:0, preco7:0, ean:'', ipi:0, descricao:'Novo produto', nome2:'', unidQtdCx:'' }
+    : { modelo:'NOVO', codigo:'', unidade:'Metro', qtdCaixaM:0, medidas:'', precoPorM:0, ipi:0, precoPorCaixa:0, ean:'', descricao:'Novo produto', nome2:'', unidQtdCx:'' };
+  CATALOG[kind].unshift(base);
+  renderAdminBody();
+}
+function removeProduct(kind, idx){
+  if(!confirm('Remover este produto da tabela?')) return;
+  CATALOG[kind].splice(idx,1);
+  renderAdminBody();
+}
+
+// ---------- ICMS / ST ----------
+function adminIcmsTable(){
+  const rows = CATALOG.icmsSt.map((r, idx) => `
+    <tr>
+      <td><input value="${escapeHtml(r.uf)}" style="width:50px" onchange="editIcms(${idx},'uf',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.icms}" style="width:80px" onchange="editIcms(${idx},'icms',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.st}" style="width:80px" onchange="editIcms(${idx},'st',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.rodatetoNac}" style="width:80px" onchange="editIcms(${idx},'rodatetoNac',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.rodatetoImp}" style="width:80px" onchange="editIcms(${idx},'rodatetoImp',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.stCxCorte}" style="width:80px" onchange="editIcms(${idx},'stCxCorte',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.perfisLed}" style="width:80px" onchange="editIcms(${idx},'perfisLed',this.value)"></td>
+      <td class="num"><input type="number" step="0.0001" value="${r.roseta}" style="width:80px" onchange="editIcms(${idx},'roseta',this.value)"></td>
+      <td class="no-print"><button class="item-remove" onclick="removeIcmsRow(${idx})">✕</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="panel">
+      <div class="toolbar no-print">
+        <h3 style="margin:0">Alíquotas por estado (formato decimal, ex.: 0.18 = 18%)</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost btn-sm" onclick="addIcmsRow()">+ Novo estado</button>
+          <button class="btn-primary btn-sm" onclick="saveCatalog()">Salvar alterações</button>
+        </div>
+      </div>
+      <div class="subgrid">
+      <table>
+        <thead><tr><th>UF</th><th class="num">ICMS</th><th class="num">ST base</th>
+          <th class="num">Rodateto Nac.</th><th class="num">Rodateto Imp.</th><th class="num">Guia Corte</th>
+          <th class="num">Perfis LED</th><th class="num">Roseta</th><th class="no-print"></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      </div>
+    </div>`;
+}
+function editIcms(idx, field, value){
+  const isNumeric = field !== 'uf';
+  CATALOG.icmsSt[idx][field] = isNumeric ? (parseFloat(value)||0) : value.toUpperCase();
+}
+function addIcmsRow(){
+  CATALOG.icmsSt.unshift({uf:'XX', st:0, icms:0, icmsImport:0, stCxCorte:0, perfisLed:0, rodatetoNac:0, rodatetoImp:0, roseta:0, semST:0});
+  renderAdminBody();
+}
+function removeIcmsRow(idx){
+  if(!confirm('Remover este estado?')) return;
+  CATALOG.icmsSt.splice(idx,1);
+  renderAdminBody();
+}
+
+// ---------- Listas suspensas ----------
+function simpleListEditor(key, title){
+  const items = CATALOG[key];
+  const rows = items.map((v,idx) => `
+    <div class="row" style="margin-bottom:6px;align-items:center">
+      <input value="${escapeHtml(v)}" onchange="editListItem('${key}',${idx},this.value)">
+      <button class="item-remove" onclick="removeListItem('${key}',${idx})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="panel">
+      <div class="toolbar no-print">
+        <h3 style="margin:0">${title}</h3>
+        <button class="btn-ghost btn-sm" onclick="addListItem('${key}')">+ Adicionar</button>
+      </div>
+      ${rows || '<p class="muted">Nenhum item.</p>'}
+    </div>`;
+}
+function editListItem(key, idx, value){ CATALOG[key][idx] = value; }
+function addListItem(key){ CATALOG[key].push('Novo item'); renderAdminBody(); }
+function removeListItem(key, idx){ CATALOG[key].splice(idx,1); renderAdminBody(); }
+
+function adminLists(){
+  const repRows = CATALOG.representantes.map((r,idx) => `
+    <tr>
+      <td><input value="${escapeHtml(r.nome)}" onchange="editRep(${idx},'nome',this.value)"></td>
+      <td style="width:70px"><input value="${escapeHtml(r.uf)}" onchange="editRep(${idx},'uf',this.value)"></td>
+      <td><input value="${escapeHtml(r.fone)}" onchange="editRep(${idx},'fone',this.value)"></td>
+      <td><input value="${escapeHtml(r.email)}" onchange="editRep(${idx},'email',this.value)"></td>
+      <td class="no-print"><button class="item-remove" onclick="removeRep(${idx})">✕</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="toolbar no-print" style="margin-bottom:6px">
+      <div></div>
+      <button class="btn-primary btn-sm" onclick="saveCatalog()">Salvar todas as alterações desta aba</button>
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:1;min-width:260px">${simpleListEditor('cores','Cores')}</div>
+      <div style="flex:1;min-width:260px">${simpleListEditor('frete','Frete')}</div>
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:1;min-width:260px">${simpleListEditor('prazo','Prazo de Entrega')}</div>
+      <div style="flex:1;min-width:260px">${simpleListEditor('condPagamento','Condição de Pagamento')}</div>
+    </div>
+    <div class="panel">
+      <div class="toolbar no-print">
+        <h3 style="margin:0">Representantes</h3>
+        <button class="btn-ghost btn-sm" onclick="addRep()">+ Adicionar</button>
+      </div>
+      <div class="subgrid">
+      <table>
+        <thead><tr><th>Nome</th><th>UF</th><th>Fone</th><th>Email</th><th class="no-print"></th></tr></thead>
+        <tbody>${repRows}</tbody>
+      </table>
+      </div>
+    </div>
+  `;
+}
+function editRep(idx, field, value){ CATALOG.representantes[idx][field] = value; }
+function addRep(){ CATALOG.representantes.push({nome:'Novo representante', uf:'', fone:'', email:''}); renderAdminBody(); }
+function removeRep(idx){ CATALOG.representantes.splice(idx,1); renderAdminBody(); }
+
+// ---------- Segurança ----------
+function adminSecurity(){
+  return `
+    <div class="panel" style="max-width:420px">
+      <h2>Senhas de acesso</h2>
+      <div class="field">
+        <label>Senha de acesso (usuários)</label>
+        <input id="pw-access" value="${escapeHtml(AUTH.accessPassword)}">
+      </div>
+      <div class="field">
+        <label>Senha de administrador</label>
+        <input id="pw-admin" value="${escapeHtml(AUTH.adminPassword)}">
+      </div>
+      <button class="btn-primary" onclick="updatePasswords()">Salvar senhas</button>
+      <p class="hint">A senha de acesso é compartilhada por toda a equipe que preenche orçamentos. A senha de administrador dá acesso a esta área. Compartilhe com cuidado.</p>
+    </div>`;
+}
+function updatePasswords(){
+  AUTH.accessPassword = document.getElementById('pw-access').value;
+  AUTH.adminPassword = document.getElementById('pw-admin').value;
+  saveAuth();
+}
+
+</script>
+</body>
+</html>
