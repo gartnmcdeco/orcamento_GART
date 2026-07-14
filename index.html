@@ -145,6 +145,11 @@
   .subgrid{ overflow-x:auto; }
   .item-remove{ color:var(--err); background:none; border:none; font-size:16px; padding:2px 6px; }
 
+  .manual-row{ background:#f4f8f8; }
+  .manual-row td{ padding:6px 8px; }
+  .manual-desc-input{ font-style:italic; color:var(--brand-petrol-dark); font-weight:600; }
+  .manual-value-input{ text-align:right; font-weight:700; }
+
   footer.printfoot{ display:none; }
 
   .print-heading{ display:none; }
@@ -220,7 +225,9 @@
     table{ font-size:8.5px; }
     th, td{ padding:2px 4px; }
     th{ font-size:7px; }
-    .qty-input{ font-size:9px !important; padding:2px 4px !important; text-align:left; font-weight:400 !important; }
+    td.small{ font-size:7.5px !important; }
+    .qty-input{ font-size:9px !important; padding:2px 4px !important; text-align:left; font-weight:400 !important; width:100% !important; }
+    th.col-qtd, td.col-qtd{ width:42px !important; max-width:42px !important; }
 
     body.hide-desc-print .col-desc{ display:none !important; }
 
@@ -309,7 +316,13 @@ function defaultQuote(){
 }
 
 function newItem(){
-  return { id: crypto.randomUUID(), produto:'', qtd:1, cor:'', descPct:0 };
+  return { id: crypto.randomUUID(), tipo:'produto', produto:'', qtd:1, cor:'', descPct:0 };
+}
+
+// Linha manual: usada para frete destacado em nota, ou qualquer serviço avulso
+// que não vem da tabela de preços — descrição livre + valor digitado direto.
+function newManualItem(){
+  return { id: crypto.randomUUID(), tipo:'manual', descricaoManual:'', valorManual:'' };
 }
 
 let quote = defaultQuote();
@@ -505,6 +518,14 @@ function lookupSTPercent(modelo, canal, uf){
 }
 
 function calcItem(item, header){
+  if(item.tipo === 'manual'){
+    const val = parseFloat(String(item.valorManual||'0').replace(',','.')) || 0;
+    return {
+      produtoData:null, precoTabela:0, precoComDesconto:0, precoUnitario:0, subTotal:val,
+      ipiPct:0, stPct:0, valorIPI:0, valorST:0, valorTotalUnit:val, valorTotalLinha:val,
+      encontrado:true, precoIndefinido:false, isManual:true
+    };
+  }
   const produtoData = findProduto(item.produto, header.canal);
   const clientIcmsRate = getClientIcmsRate(header.canal, header.clienteUF);
   const precoTabela = getPrecoTabela(produtoData, header.canal, clientIcmsRate);
@@ -652,6 +673,7 @@ function renderOrcamento(){
             Ocultar coluna de desconto no PDF
           </label>
           <button class="btn-ghost btn-sm" onclick="addItem()">+ Adicionar item</button>
+          <button class="btn-ghost btn-sm" onclick="addManualItem()">+ Frete/Serviço Avulso</button>
           <button class="btn-primary btn-sm" onclick="window.print()">Exportar / Salvar PDF</button>
         </div>
       </div>
@@ -660,7 +682,7 @@ function renderOrcamento(){
       <table id="items-table">
         <thead><tr>
           <th style="min-width:150px">Produto</th>
-          <th style="width:100px">Qtd</th>
+          <th class="col-qtd" style="width:100px">Qtd</th>
           <th>Unid/Quant.Cx</th>
           <th>Descrição</th>
           <th>Cor</th>
@@ -700,6 +722,22 @@ function emptyRow(){
 }
 
 function renderItemRow(item, corOptions){
+  if(item.tipo === 'manual'){
+    return `
+      <tr data-row-id="${item.id}" class="manual-row">
+        <td colspan="11">
+          <input type="text" class="manual-desc-input" placeholder="Ex: Frete - Cotação 1234"
+            value="${escapeHtml(item.descricaoManual||'')}"
+            oninput="onManualDescInput('${item.id}', this.value)">
+        </td>
+        <td class="num">
+          <input type="text" inputmode="decimal" class="manual-value-input" placeholder="0,00"
+            value="${item.valorManual||''}"
+            oninput="onManualValueInput('${item.id}', this.value)">
+        </td>
+        <td class="no-print"><button class="item-remove" title="Remover" onclick="removeItem('${item.id}')">✕</button></td>
+      </tr>`;
+  }
   return `
     <tr data-row-id="${item.id}">
       <td>
@@ -709,16 +747,17 @@ function renderItemRow(item, corOptions){
           onfocus="onProdInput('${item.id}', this.value)"
           data-row="${item.id}">
       </td>
-      <td>
+      <td class="col-qtd">
         <input type="text" inputmode="decimal" class="qty-input" value="${item.qtd}"
           oninput="onQtyInput('${item.id}', this.value)">
       </td>
       <td class="small" data-cell="unid">—</td>
       <td class="small" data-cell="desc">—</td>
       <td>
-        <select onchange="onCorChange('${item.id}', this.value)">
+        <select class="no-print" onchange="onCorChange('${item.id}', this.value)">
           ${corOptions.map(c=>`<option value="${escapeHtml(c)}" ${c===item.cor?'selected':''}>${c||'—'}</option>`).join('')}
         </select>
+        <span class="print-only">${escapeHtml(item.cor) || '—'}</span>
       </td>
       <td class="small" data-cell="dim">—</td>
       <td class="col-desc"><input type="number" min="0" max="100" step="0.5" value="${item.descPct}" title="% Desconto"
@@ -849,7 +888,23 @@ function onCorChange(id, value){
   const item = quote.itens.find(i => i.id === id);
   if(!item) return;
   item.cor = value;
-  // não afeta cálculo, sem necessidade de recompute
+  const row = document.querySelector(`tr[data-row-id="${id}"]`);
+  const printSpan = row ? row.querySelector('select.no-print + .print-only') : null;
+  if(printSpan) printSpan.textContent = value || '—';
+}
+
+function onManualDescInput(id, value){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  item.descricaoManual = value;
+}
+
+function onManualValueInput(id, rawValue){
+  const item = quote.itens.find(i => i.id === id);
+  if(!item) return;
+  const cleaned = rawValue.replace(/[^0-9.,]/g, '');
+  item.valorManual = cleaned.replace(',', '.');
+  recomputeTotals();
 }
 
 // ---- Recalcula uma linha sem re-renderizar a tabela inteira (preserva o foco do campo) ----
@@ -857,6 +912,7 @@ function recomputeRow(id){
   const item = quote.itens.find(i => i.id === id);
   const row = document.querySelector(`tr[data-row-id="${id}"]`);
   if(!item || !row) return;
+  if(item.tipo === 'manual'){ recomputeTotals(); return; }
   const calc = calcItem(item, quote);
 
   row.querySelector('[data-cell="unid"]').textContent = calc.produtoData ? (calc.produtoData.unidQtdCx || calc.produtoData.unidade || '—') : '—';
@@ -876,7 +932,7 @@ function recomputeTotals(){
   let totalGeral = 0, totalIPI = 0, totalST = 0, totalItens = 0;
   quote.itens.forEach(item => {
     const calc = calcItem(item, quote);
-    const qtd = parseFloat(item.qtd) || 0;
+    const qtd = item.tipo === 'manual' ? 0 : (parseFloat(item.qtd) || 0);
     totalGeral += calc.valorTotalLinha;
     totalIPI += calc.valorIPI * qtd;
     totalST += calc.valorST * qtd;
@@ -979,6 +1035,10 @@ function updateItem(id, field, value){
 
 function addItem(){
   quote.itens.push(newItem());
+  renderOrcamento();
+}
+function addManualItem(){
+  quote.itens.push(newManualItem());
   renderOrcamento();
 }
 function removeItem(id){
